@@ -15,26 +15,23 @@ print(pipe(lambda x: x*2, lambda x: x+2)(10))
 print(compose(lambda x: x*2, lambda x: x+2)(10))
 
 
-def from_file(encoding: str = 'utf-8'):
-    def _decorator(func):
-        @wraps(func)
-        def _wrapper(src: Union[str, Iterable[str]], *args, **kwargs):
-            if isinstance(src, str):
-                with open(src, encoding=encoding) as fin:
-                    return func(fin, *args, **kwargs)
-            else:
-                return func(src, *args, **kwargs)
-        return _wrapper
-    return _decorator
+def from_file(func):
+    @wraps(func)
+    def _wrapper(src: Union[str, Iterable[str]], *args, **kwargs):
+        if isinstance(src, str):
+            open_args = {'file': src, 'encoding': kwargs.pop('encoding') if 'encoding' in kwargs else 'utf-8'}
+            with open(**open_args) as fin:
+                return func(fin, *args, **kwargs)
+        else:
+            return func(src, *args, **kwargs)
+    return _wrapper
 
 
-@from_file()
+@from_file
 def print_lines(stream: Iterable[str]):
     for line in stream:
         print(line.rstrip())
 
 
-f = from_file('utf-8')(print_lines)
-
-f('logger.py')
-f(iter('logger.py'))
+print_lines('logger.py', encoding='utf-8')
+print_lines(iter('logger.py'))
