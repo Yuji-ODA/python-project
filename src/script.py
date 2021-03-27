@@ -28,12 +28,12 @@ def from_stream_supplier(func):
         elif hasattr(src, '__iter__'):
             return func(src, *args, **kwargs)
         else:
-            print('src not supported')
+            print(f'src is not supported type: {type(src)}')
     return _wrapper
 
 
 @from_stream_supplier
-def print_elements(stream: Union[Iterable[str], Callable[[], Union[TextIO, Iterable[str]]]]):
+def print_elements(stream):
     for line in stream:
         print(line.rstrip())
 
