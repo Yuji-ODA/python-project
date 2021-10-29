@@ -12,7 +12,6 @@ def get_logger(name: str, level: int, fmt: str = logging.BASIC_FORMAT):
     return logger
 
 
-
 if __name__ == '__main__':
     # logging.basicConfig(level=logging.INFO)
     log_format = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
