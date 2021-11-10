@@ -32,15 +32,14 @@ def main(population1, population2):
         p12_actual = n12_actual / sample_union_size_actual
 
         n12_expected = sampling_rate * intersect_size
-        sample_union_size_expected = sampling_rate * union_size
-        p12_expected = n12_expected / sample_union_size_expected
+        p12_expected = p12
 
         n12_computed = (sampling_rate ** 2) * intersect_size
         sample_union_size_computed = sampling_rate * (size1 + size2 - n12_computed)
         p12_computed = n12_computed / sample_union_size_computed
 
         n12_corrected = n12_actual / sampling_rate
-        p12_corrected = n12_corrected / sample_union_size_actual
+        p12_corrected = n12_corrected / (sample_union_size_actual - (n12_corrected - n12_actual))
 
         print(f'expected: {n12_expected}, proportion: {p12_expected}')
         print(f'actual: {n12_actual}, proportion: {p12_actual}')
@@ -49,7 +48,7 @@ def main(population1, population2):
 
 
 if __name__ == '__main__':
-    set1 = set(range(0, 250000))
-    set2 = set(range(200000, 500000))
+    set1 = set(range(100000, 300000))
+    set2 = set(range(200000, 600000))
 
     main(set1, set2)
