@@ -18,8 +18,8 @@ for sampling_rate in np.arange(0.1, 1, 0.1):
     print('==============================================================')
     print(f'sampling rate: {sampling_rate}')
 
-    sample1 = set(sample(set1, int(len(set1) * sampling_rate)))
-    sample2 = set(sample(set2, int(len(set2) * sampling_rate)))
+    sample1 = set(sample(list(set1), int(len(set1) * sampling_rate)))
+    sample2 = set(sample(list(set2), int(len(set2) * sampling_rate)))
 
     sample_intersection_size = len(sample1.intersection(sample2))
     sample_union_size = len(sample1.union(sample2))
