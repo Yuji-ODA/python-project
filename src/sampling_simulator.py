@@ -40,7 +40,8 @@ def main(population1, population2):
         # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの二乗となる
         # これに母集合の重複数をかけて重複数の期待値を得る
         n12_computed = (sampling_rate ** 2) * intersect_size
-        sample_union_size_computed = sampling_rate * (size1 + size2 - n12_computed)
+        # サンプリングの総数から重複分を引く
+        sample_union_size_computed = sampling_rate * (size1 + size2) - n12_computed
         p12_computed = n12_computed / sample_union_size_computed
 
         # 補正
