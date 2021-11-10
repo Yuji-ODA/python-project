@@ -32,7 +32,7 @@ for sampling_rate in np.arange(0.1, 1, 0.1):
 
     sample_from_union_size = len(sample_from_union)
     n12 = len(sample_from_union.intersection(intersect))
-    n12_estimated = p1_over_2 * len(sample2) * p2_over_1 * len(sample1) / intersect_len
+    n12_estimated = (sampling_rate ** 2) * p1_over_2 * len(set1) * p2_over_1 * len(set2) / intersect_len
 
     print(f'expected: {p12 * sample_union_size}, proportion: {p12}')
     print(f'actual: {sample_intersection_size}, proportion: {sample_intersection_size / sample_union_size}')
