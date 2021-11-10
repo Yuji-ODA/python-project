@@ -31,19 +31,22 @@ for sampling_rate in np.arange(0.1, 1, 0.1):
     sample_intersection = sample1.intersection(sample2)
     n12_actual = len(sample_intersection)
     sample_union_size_actual = len(sample1.union(sample2))
+    p12_actual = n12_actual / sample_union_size_actual
 
     n12_expected = (sampling_rate ** 2) * p1_over_2 * set2_size * p2_over_1 * set1_size / intersect_size
     sample_union_size_expected = sampling_rate * (set1_size + set2_size - n12_expected)
+    p12_expected = n12_expected / sample_union_size_expected
 
     n12_estimated = p12 * sample_union_size_actual * sampling_rate
     p12_estimated = n12_actual / sample_union_size_actual / sampling_rate
 
-    print(f'expected: {n12_expected}, proportion: {n12_expected / sample_union_size_expected}')
-    print(f'actual: {n12_actual}, proportion: {n12_actual / sample_union_size_actual}')
+    print(f'expected: {n12_expected}, proportion: {p12_expected}')
+    print(f'actual: {n12_actual}, proportion: {p12_actual}')
     print(f'estimated: {n12_estimated}, proportion: {p12_estimated}')
 
     sample_from_union = set(sample(list(union), int(union_size * sampling_rate)))
     sample_from_union_size = len(sample_from_union)
-    n12_from_union = len(sample_from_union.intersection(intersect))
+    n12_by_union = len(sample_from_union.intersection(intersect))
+    p12_by_union = n12_by_union / sample_from_union_size
 
-    print(f'sample from union: {n12_from_union}, proportion: {n12_from_union / sample_from_union_size}')
+    print(f'sampling from union set: {n12_by_union}, proportion: {p12_by_union}')
