@@ -23,6 +23,7 @@ def main(population1, population2):
         print('==============================================================')
         print(f'sampling rate: {sampling_rate}')
 
+        # 個別サンプリング
         sample1 = set(sample(list(population1), int(size1 * sampling_rate)))
         sample2 = set(sample(list(population2), int(size2 * sampling_rate)))
 
@@ -31,15 +32,23 @@ def main(population1, population2):
         n12_actual = len(sample_intersection)
         p12_actual = n12_actual / sample_union_size_actual
 
+        # 理論値の計算
         n12_expected = sampling_rate * intersect_size
         p12_expected = p12
 
+        # 個別サンプリングの場合の理論値の計算
+        # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの二乗となる
+        # これに母集合の重複数をかけて重複数の期待値を得る
         n12_computed = (sampling_rate ** 2) * intersect_size
         sample_union_size_computed = sampling_rate * (size1 + size2 - n12_computed)
         p12_computed = n12_computed / sample_union_size_computed
 
+        # 補正
+        # 重複分の取りこぼしを補正
         n12_corrected = n12_actual / sampling_rate
-        p12_corrected = n12_corrected / (sample_union_size_actual - (n12_corrected - n12_actual))
+        # 重複分を増やした分だけ全体数を減らす
+        sample_union_size_corrected = sample_union_size_actual - (n12_corrected - n12_actual)
+        p12_corrected = n12_corrected / sample_union_size_corrected
 
         print(f'expected: {n12_expected}, proportion: {p12_expected}')
         print(f'actual: {n12_actual}, proportion: {p12_actual}')
