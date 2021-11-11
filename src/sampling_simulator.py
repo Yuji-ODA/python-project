@@ -37,19 +37,7 @@ def main():
 
 def run_simulation_2(population1, population2):
 
-    size1 = len(population1)
-    size2 = len(population2)
-
-    intersect = set(population1).intersection(population2)
-    union = set(population1).union(population2)
-
-    n_all = len(union)
-    n12 = len(intersect)
-    p12 = n12 / n_all
-    n1 = size1 - n12
-    n2 = size2 - n12
-    p1 = n1 / n_all
-    p2 = n2 / n_all
+    n1, n12, n2, p1, p12, p2 = decompose_2(population1, population2)
 
     for sampling_rate in np.arange(0.1, 1, 0.1):
         print('=======================================================================================================')
@@ -59,20 +47,17 @@ def run_simulation_2(population1, population2):
 
 def simulate_2(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate):
 
-    size1 = len(population1)
-    size2 = len(population2)
+    size1 = n1 + n12
+    size2 = n2 + n12
+
+    sampling_rate1 = sampling_rate2 = sampling_rate
 
     # 個別サンプリング
-    sample1 = set(sample(list(population1), int(size1 * sampling_rate)))
-    sample2 = set(sample(list(population2), int(size2 * sampling_rate)))
+    sample1 = set(sample(list(population1), int(size1 * sampling_rate1)))
+    sample2 = set(sample(list(population2), int(size2 * sampling_rate2)))
 
-    sample_intersection = sample1.intersection(sample2)
-    n_all_actual = len(sample1.union(sample2))
-    n12_actual = len(sample_intersection)
-    n1_actual = len(sample1) - n12_actual
-    n2_actual = len(sample2) - n12_actual
-
-    p12_actual, p1_actual, p2_actual = array(n12_actual, n1_actual, n2_actual) / n_all_actual
+    n1_actual, n12_actual, n2_actual, p1_actual, p12_actual, p2_actual = decompose_2(sample1, sample2)
+    n_all_actual = n1 + n12 + n2
 
     # 理論値の計算
     n12_expected, n1_expected, n2_expected = sampling_rate * array(n12, n1, n2)
@@ -113,6 +98,21 @@ def print_result(header, n12, n1, n2, p12, p1, p2, err=math.nan):
 
 def array(*args):
     return np.array(args)
+
+
+def decompose_2(population1, population2):
+    intersect = set(population1).intersection(population2)
+    union = set(population1).union(population2)
+
+    n_all = len(union)
+    n12 = len(intersect)
+    p12 = n12 / n_all
+    n1 = len(population1) - n12
+    n2 = len(population2) - n12
+    p1 = n1 / n_all
+    p2 = n2 / n_all
+
+    return n1, n12, n2, p1, p12, p2
 
 
 if __name__ == '__main__':
