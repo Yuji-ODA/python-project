@@ -1,10 +1,41 @@
+import argparse
+import math
+import sys
 from random import sample
 
 import numpy as np
 from numpy.linalg import norm
 
 
-def main(population1, population2):
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('p12', type=float)
+    parser.add_argument('p1', type=float)
+    parser.add_argument('p2', type=float, nargs='?')
+    parser.add_argument('-n', '--total-size', type=int, default=1000000, help='(default: 1000000)')
+    args = parser.parse_args()
+
+    if args.p2 is None:
+        p1 = args.p1
+        p12 = args.p12
+        p2 = round(1 - p1 - p12, 9)
+        if p2 < 0:
+            print('the sum of params should not exceed 1', file=sys.stderr)
+            exit(-1)
+    else:
+        sum_of_fractions = sum((args.p1, args.p12, args.p2))
+        p1, p12, p2 = array(args.p1, args.p12, args.p2) / sum_of_fractions
+
+    print(f'p12: {p12}, p1: {p1}, p2: {p2}')
+
+    n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * args.total_size))
+
+    set1 = set(range(0, n1 + n12))
+    set2 = set(range(n1, n1 + n12 + n2))
+    run_2(set1, set2)
+
+
+def run_2(population1, population2):
 
     size1 = len(population1)
     size2 = len(population2)
@@ -19,8 +50,6 @@ def main(population1, population2):
     n2 = size2 - n12
     p1 = n1 / n_all
     p2 = n2 / n_all
-
-    print(f'p12: {p12}, p1: {p1}, p2: {p2}')
 
     for sampling_rate in np.arange(0.1, 1, 0.1):
         print('=======================================================================================================')
@@ -70,7 +99,7 @@ def main(population1, population2):
         print_result('corrected', n12_corrected, n1_corrected, n2_corrected, p12_corrected, p1_corrected, p2_corrected, err_corrected)
 
 
-def print_result(header, n12, n1, n2, p12, p1, p2, err=0.0):
+def print_result(header, n12, n1, n2, p12, p1, p2, err=math.nan):
     print(f'{header}: n12 = {round(n12)}, n1 = {round(n1)}, n2 = {round(n2)}, '
           f'p12 = {p12:.4f}, p1 = {p1:.4f}, p2 = {p2:.4f}, err = {err:.6f}')
 
@@ -80,7 +109,4 @@ def array(*args):
 
 
 if __name__ == '__main__':
-    set1 = set(range(100000, 300000))
-    set2 = set(range(200000, 600000))
-
-    main(set1, set2)
+    main()
