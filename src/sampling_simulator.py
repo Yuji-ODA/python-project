@@ -1,13 +1,13 @@
 import math
 from random import sample
-from typing import Sequence, Any, Union
+from typing import Any, Union, Set
 
 from numpy.linalg import norm
 
 from src.sampling_simulator_util import array, decompose2, Cardinality2
 
 
-def simulate(population1: Sequence[Any], population2: Sequence[Any], n: Cardinality2,
+def simulate(population1: Set[Any], population2: Set[Any], n: Cardinality2,
              sampling_rate1: float, sampling_rate2: Union[float, None] = None):
 
     if sampling_rate2 is None:
@@ -46,7 +46,7 @@ def print_result(header: str, n: Cardinality2, err: float = math.nan):
 
 
 # 個別サンプリング
-def do_sampling(population1: Sequence[Any], population2: Sequence[Any],
+def do_sampling(population1: Set[Any], population2: Set[Any],
                 sampling_rate1: float, sampling_rate2: float) -> Cardinality2:
     sample1 = set(sample(list(population1), int(len(population1) * sampling_rate1)))
     sample2 = set(sample(list(population2), int(len(population2) * sampling_rate2)))
