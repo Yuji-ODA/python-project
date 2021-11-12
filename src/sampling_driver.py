@@ -1,11 +1,11 @@
 import argparse
 import sys
-from itertools import combinations, chain, combinations_with_replacement
+from itertools import combinations_with_replacement
 
 import numpy as np
 
-from src.sampling_simulator_diffrent_rate import simulate
-from src.sampling_simulator_util import array, decompose_2
+from src.sampling_simulator import simulate
+from src.sampling_simulator_util import array, decompose2
 
 
 def main():
@@ -27,23 +27,21 @@ def main():
         sum_of_fractions = sum((args.p1, args.p12, args.p2))
         p1, p12, p2 = array(args.p1, args.p12, args.p2) / sum_of_fractions
 
-    print(f'p12: {p12}, p1: {p1}, p2: {p2}')
+    print(f'p1: {p1}, p12: {p12}, p2: {p2}')
 
-    n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * args.total_size))
-
-    set1 = set(range(0, n1 + n12))
-    set2 = set(range(n1, n1 + n12 + n2))
-    run_simulation_2(set1, set2)
+    run_simulations(p1, p12, p2, args.total_size)
 
 
-def run_simulation_2(population1, population2):
+def run_simulations(p1, p12, p2, total_size):
+    n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * total_size))
+    set1, set2 = set(range(0, n1 + n12)), set(range(n1, n1 + n12 + n2))
 
-    n1, n12, n2, p1, p12, p2 = decompose_2(population1, population2)
+    n_stats, p_stats = decompose2(set1, set2)
 
     for sampling_rate1, sampling_rate2 in combinations_with_replacement(np.arange(0.1, 1, 0.1), 2):
         print('========================================================================================================')
-        print(f'sampling rate: {round(sampling_rate1, 9)}, {round(sampling_rate2, 9)}')
-        simulate(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate1, sampling_rate2)
+        print(f'sampling rate: {round(sampling_rate1, 9)} {round(sampling_rate2, 9)}')
+        simulate(set1, set2, n_stats, p_stats, sampling_rate1, sampling_rate2)
 
 
 if __name__ == '__main__':
