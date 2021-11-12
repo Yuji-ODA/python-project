@@ -28,10 +28,11 @@ def simulate(population1: Set[Any], population2: Set[Any], n: Cardinality2,
     n_corrected = do_correction(n_actual, sampling_rate1, sampling_rate2)
 
     # 誤差計算
-    probabilities_expected = n_expected.normalize()
-    err_actual = norm(n_actual.normalize() - probabilities_expected)
-    err_computed = norm(n_computed.normalize() - probabilities_expected)
-    err_corrected = norm(n_corrected.normalize() - probabilities_expected)
+    probabilities_expected = n_expected.normalized()
+    err_actual = norm(n_actual.normalized() - probabilities_expected)
+
+    err_computed = norm(n_computed.normalized() - probabilities_expected)
+    err_corrected = norm(n_corrected.normalized() - probabilities_expected)
 
     print_result('expected ', n_expected)
     print_result('actual   ', n_actual, err_actual)
@@ -75,8 +76,6 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, n: Cardinality2)
     # これに母集合の重複数をかけて重複数の期待値を得る
     n12_computed = sampling_rate1 * sampling_rate2 * n.v12
     # サンプリングの総数から重複分を引く
-    size1 = n.v1 + n.v12
-    size2 = n.v12 + n.v2
-    n1_computed, n2_computed = array(sampling_rate1, sampling_rate2) * array(size1, size2) - n12_computed
+    n1_computed, n2_computed = array(sampling_rate1, sampling_rate2).dot(array(n.size1, n.size2)) - n12_computed
 
     return Cardinality2(n1_computed, n12_computed, n2_computed)
