@@ -57,7 +57,7 @@ def simulate_2(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate
     sample2 = set(sample(list(population2), int(size2 * sampling_rate2)))
 
     n1_actual, n12_actual, n2_actual, p1_actual, p12_actual, p2_actual = decompose_2(sample1, sample2)
-    n_all_actual = n1 + n12 + n2
+    n_all_actual = n1_actual + n12_actual + n2_actual
 
     # 理論値の計算
     n12_expected, n1_expected, n2_expected = sampling_rate * array(n12, n1, n2)
