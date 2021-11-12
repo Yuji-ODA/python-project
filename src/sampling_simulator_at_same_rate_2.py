@@ -34,7 +34,7 @@ def simulate(population1, population2, n, sampling_rate):
     n12_corrected = n_actual.v12 / sampling_rate
     # 重複分を増やした分だけ減らす
     # n_computed.v12 = n_actual.v12 = (sampling_rate ** 2) * n.v12
-    # n_corrected.v1 = n_expected.v1 = n.v1 * sampling_rate
+    # n1_corrected = n_expected.v1 = n.v1 * sampling_rate
     # n_computed.v1 = n_actual.v1 = n.size1 * sampling_rate - n_actual.v12
     #               = (n.v1 + n.v12) * sampling_rate - n_actual.v12
     #               = (n1_corrected / sampling_rate + n_actual.v12 / (sampling_rate ** 2)) * sampling_rate - n_actual.v12
