@@ -34,3 +34,20 @@ def decompose2(population1, population2) -> Cardinality2:
     n2 = len(population2) - n12
 
     return Cardinality2(n1, n12, n2)
+
+
+def decompose3(population1, population2, population3) -> Cardinality3:
+    intersect12 = set(population1).intersection(population2)
+    intersect13 = set(population1).intersection(population3)
+    intersect23 = set(population2).intersection(population3)
+    intersect123 = set(intersect12).intersection(intersect13)
+
+    n123 = len(intersect123)
+    n12 = len(intersect12) - n123
+    n13 = len(intersect13) - n123
+    n23 = len(intersect23) - n123
+    n1 = len(population1) - n12 - n13 + n123
+    n2 = len(population2) - n12 - n23 + n123
+    n3 = len(population3) - n13 - n23 + n123
+
+    return Cardinality3(n1, n2, n3, n12, n13, n23, n123)
