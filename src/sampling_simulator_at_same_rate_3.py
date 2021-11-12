@@ -79,9 +79,9 @@ def simulate(population1, population2, population3, n, sampling_rate):
     # odds = sampling_rate / (1 - sampling_rate)
     # n1_corrected = n_actual.v1 - (n_actual.v12 + n_actual.v13) / odds - n_actual.v123 * (sampling_rate ** -2 - 1 - 2 * (1 - sampling_rate) / sampling_rate ** 2)
 
-    n1_corrected = n_actual.v1 - (((n_actual.v12 + n_actual.v13) * odds - n_actual.v123) / (odds ** 2))
-    n2_corrected = n_actual.v2 - (((n_actual.v12 + n_actual.v23) * odds - n_actual.v123) / (odds ** 2))
-    n3_corrected = n_actual.v3 - (((n_actual.v13 + n_actual.v23) * odds - n_actual.v123) / (odds ** 2))
+    n1_corrected = n_actual.v1 - (n_actual.v12 + n_actual.v13) / odds + n_actual.v123 / odds ** 2
+    n2_corrected = n_actual.v2 - (n_actual.v12 + n_actual.v23) / odds + n_actual.v123 / odds ** 2
+    n3_corrected = n_actual.v3 - (n_actual.v13 + n_actual.v23) / odds + n_actual.v123 / odds ** 2
 
     n_corrected = Cardinality3(n1_corrected, n2_corrected, n3_corrected,
                                n12_corrected, n13_corrected, n23_corrected, n123_corrected)
