@@ -15,8 +15,7 @@ def simulate(population1: Set[Any], population2: Set[Any], n: Cardinality2,
 
     # 理論値の計算
     # 抽出率が違う場合は考えられないので、ここでは小さい方の値である場合を想定する
-    n1_expected, n12_expected, n2_expected = min(sampling_rate1, sampling_rate2) * array(n.v1, n.v12, n.v2)
-    n_expected = Cardinality2(n1_expected, n12_expected, n2_expected)
+    n_expected = n.scaled(min(sampling_rate1, sampling_rate2))
 
     # 個別サンプリングの場合の理論値の計算
     n_computed = do_estimation(sampling_rate1, sampling_rate2, n)
@@ -76,6 +75,6 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, n: Cardinality2)
     # これに母集合の重複数をかけて重複数の期待値を得る
     n12_computed = sampling_rate1 * sampling_rate2 * n.v12
     # サンプリングの総数から重複分を引く
-    n1_computed, n2_computed = array(sampling_rate1, sampling_rate2).dot(array(n.size1, n.size2)) - n12_computed
+    n1_computed, n2_computed = array(sampling_rate1, sampling_rate2) * array(n.size1, n.size2) - n12_computed
 
     return Cardinality2(n1_computed, n12_computed, n2_computed)

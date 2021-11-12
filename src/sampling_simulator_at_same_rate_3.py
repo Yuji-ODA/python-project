@@ -1,21 +1,20 @@
 import math
+from itertools import chain
 from random import sample
 
 from numpy.linalg import norm
 
-from src.sampling_simulator_util import array, decompose2
+from src.sampling_simulator_util import array, decompose3
 
 
-def simulate(population1, population2, n, sampling_rate):
-
-    size1 = n.v1 + n.v12
-    size2 = n.v2 + n.v12
+def simulate(population1, population2, population3, n, sampling_rate):
 
     # 個別サンプリング
-    sample1 = set(sample(list(population1), int(size1 * sampling_rate)))
-    sample2 = set(sample(list(population2), int(size2 * sampling_rate)))
+    sample1 = set(sample(list(population1), int(n.size1 * sampling_rate)))
+    sample2 = set(sample(list(population2), int(n.size2 * sampling_rate)))
+    sample3 = set(sample(list(population3), int(n.size3 * sampling_rate)))
 
-    n_actual = decompose2(sample1, sample2)
+    n_actual = decompose3(sample1, sample2, sample3)
 
     # 理論値の計算
     n12_expected, n1_expected, n2_expected = sampling_rate * array(n.v12, n.v1, n.v2)
@@ -26,7 +25,7 @@ def simulate(population1, population2, n, sampling_rate):
     # これに母集合の重複数をかけて重複数の期待値を得る
     n12_computed = (sampling_rate ** 2) * n.v12
     # サンプリングの総数から重複分を引く
-    n1_computed, n2_computed = array(size1, size2) * sampling_rate - n12_computed
+    n1_computed, n2_computed = array(n.size1, n.size2) * sampling_rate - n12_computed
     n_all_computed = n1_computed + n2_computed + n12_computed
     p12_computed, p1_computed, p2_computed = array(n12_computed, n1_computed, n2_computed) / n_all_computed
 
@@ -56,8 +55,11 @@ def print_result(header, n12, n1, n2, p12, p1, p2, err=math.nan):
 
 if __name__ == '__main__':
     set1 = set(range(100000))
-    set2 = set(range(50000, 200000))
+    set2 = set(chain(range(5000), range(50000, 200000)))
+    set3 = set(chain(range(30000), range(150000, 250000)))
 
-    n = decompose2(set1, set2)
+    n = decompose3(set1, set2, set3)
 
-    simulate(set1, set2, n, 0.1)
+    print(n.values())
+
+    simulate(set1, set2, set3, n, 0.1)
