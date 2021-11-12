@@ -1,51 +1,12 @@
-import argparse
 import math
-import sys
 from random import sample
 
-import numpy as np
 from numpy.linalg import norm
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('p1', type=float)
-    parser.add_argument('p2', type=float)
-    parser.add_argument('p12', type=float, nargs='?')
-    parser.add_argument('-n', '--total-size', type=int, default=1000000, help='(default: 1000000)')
-    args = parser.parse_args()
-
-    if args.p12 is None:
-        p1 = args.p1
-        p2 = args.p2
-        p12 = round(1 - p1 - p2, 9)
-        if p12 < 0:
-            print('the sum of params should not exceed 1', file=sys.stderr)
-            exit(-1)
-    else:
-        sum_of_fractions = sum((args.p1, args.p12, args.p2))
-        p1, p12, p2 = array(args.p1, args.p12, args.p2) / sum_of_fractions
-
-    print(f'p12: {p12}, p1: {p1}, p2: {p2}')
-
-    n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * args.total_size))
-
-    set1 = set(range(0, n1 + n12))
-    set2 = set(range(n1, n1 + n12 + n2))
-    run_simulation_2(set1, set2)
+from src.sampling_simulator_util import array, decompose_2
 
 
-def run_simulation_2(population1, population2):
-
-    n1, n12, n2, p1, p12, p2 = decompose_2(population1, population2)
-
-    for sampling_rate in np.arange(0.1, 1, 0.1):
-        print('=======================================================================================================')
-        print(f'sampling rate: {round(sampling_rate, 9)}')
-        simulate_2(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate)
-
-
-def simulate_2(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate):
+def simulate(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate):
 
     size1 = n1 + n12
     size2 = n2 + n12
@@ -94,26 +55,3 @@ def simulate_2(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate
 def print_result(header, n12, n1, n2, p12, p1, p2, err=math.nan):
     print(f'{header}: n12 = {round(n12)}, n1 = {round(n1)}, n2 = {round(n2)}, '
           f'p12 = {p12:.4f}, p1 = {p1:.4f}, p2 = {p2:.4f}, err = {err:.6f}')
-
-
-def array(*args):
-    return np.array(args)
-
-
-def decompose_2(population1, population2):
-    intersect = set(population1).intersection(population2)
-    union = set(population1).union(population2)
-
-    n_all = len(union)
-    n12 = len(intersect)
-    p12 = n12 / n_all
-    n1 = len(population1) - n12
-    n2 = len(population2) - n12
-    p1 = n1 / n_all
-    p2 = n2 / n_all
-
-    return n1, n12, n2, p1, p12, p2
-
-
-if __name__ == '__main__':
-    main()
