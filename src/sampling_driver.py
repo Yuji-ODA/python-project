@@ -34,7 +34,7 @@ def main():
 
 def run_simulations(p1, p12, p2, total_size):
     n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * total_size))
-    set1, set2 = set(range(0, n1 + n12)), set(range(n1, n1 + n12 + n2))
+    set1, set2 = set(range(n1 + n12)), set(range(n1, n1 + n12 + n2))
 
     n = decompose2(set1, set2)
 
