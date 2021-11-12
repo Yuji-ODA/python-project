@@ -1,63 +1,71 @@
 import math
 from random import sample
 
+import numpy as np
 from numpy.linalg import norm
 
-from src.sampling_simulator_util import array, decompose2
+from src.sampling_simulator_util import array, decompose2, Cardinality2
 
 
 def simulate(population1, population2, n, sampling_rate):
 
-    size1 = n.v1 + n.v12
-    size2 = n.v2 + n.v12
-
     # 個別サンプリング
-    sample1 = set(sample(list(population1), int(size1 * sampling_rate)))
-    sample2 = set(sample(list(population2), int(size2 * sampling_rate)))
+    sample1 = set(sample(list(population1), int(n.size1 * sampling_rate)))
+    sample2 = set(sample(list(population2), int(n.size2 * sampling_rate)))
 
     n_actual = decompose2(sample1, sample2)
 
     # 理論値の計算
-    n12_expected, n1_expected, n2_expected = sampling_rate * array(n.v12, n.v1, n.v2)
-    p12_expected, p1_expected, p2_expected = n.p12, n.p1, n.p2
+    n_expected = n.scaled(sampling_rate)
 
     # 個別サンプリングの場合の理論値の計算
     # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの二乗となる
     # これに母集合の重複数をかけて重複数の期待値を得る
     n12_computed = (sampling_rate ** 2) * n.v12
     # サンプリングの総数から重複分を引く
-    n1_computed, n2_computed = array(size1, size2) * sampling_rate - n12_computed
-    n_all_computed = n1_computed + n2_computed + n12_computed
-    p12_computed, p1_computed, p2_computed = array(n12_computed, n1_computed, n2_computed) / n_all_computed
+    n1_computed, n2_computed = array(n.size1, n.size2) * sampling_rate - n12_computed
+    n_computed = Cardinality2(n1_computed, n12_computed, n2_computed)
 
     # 補正
     # 重複分の取りこぼしを補正
     n12_corrected = n_actual.v12 / sampling_rate
     # 重複分を増やした分だけ減らす
-    n_all_corrected, n1_corrected, n2_corrected = array(n_actual.total_count, n_actual.v1, n_actual.v2) - (n12_corrected - n_actual.v12)
-    p12_corrected, p1_corrected, p2_corrected = array(n12_corrected, n1_corrected, n2_corrected) / n_all_corrected
+    # n_computed.v12 = n_actual.v12 = (sampling_rate ** 2) * n.v12
+    # n_corrected.v1 = n_expected.v1 = n.v1 * sampling_rate
+    # n_computed.v1 = n_actual.v1 = n.size1 * sampling_rate - n_actual.v12
+    #             = (n.v1 + n.v12) * sampling_rate - n_actual.v12
+    #             = (n1_corrected / sampling_rate + n_actual.v12 / (sampling_rate ** 2)) * sampling_rate - n_actual.v12
+    #             = n1_corrected + n_actual.v12 / sampling_rate - n_actual.v12
+    #             = n1_corrected + n_actual.v12 * (1 - sampling_rate) / sampling_rate
+    odds = sampling_rate / (1 - sampling_rate)
+    n1_corrected, n2_corrected = array(n_computed.v1, n_computed.v2) - n_actual.v12 / odds
+
+    n_corrected = Cardinality2(n1_corrected, n12_corrected, n2_corrected)
 
     # 誤差計算
-    probs_expected = array(p12_expected, p1_expected, p2_expected)
-    err_actual = norm(array(n_actual.p12, n_actual.p1, n_actual.p2) - probs_expected)
-    err_computed = norm(array(p12_computed, p1_computed, p2_computed) - probs_expected)
-    err_corrected = norm(array(p12_corrected, p1_corrected, p2_corrected) - probs_expected)
+    probs_expected = n_expected.normalized()
+    err_actual = norm(n_actual.normalized() - probs_expected)
+    err_computed = norm(n_computed.normalized() - probs_expected)
+    err_corrected = norm(n_corrected.normalized() - probs_expected)
 
-    print_result('expected ', n12_expected, n1_expected, n2_expected, p12_expected, p1_expected, p2_expected)
-    print_result('actual   ', n_actual.v12, n_actual.v1, n_actual.v2, n_actual.p12, n_actual.p1, n_actual.p2, err_actual)
-    print_result('computed ', n12_computed, n1_computed, n2_computed, p12_computed, p1_computed, p2_computed, err_computed)
-    print_result('corrected', n12_corrected, n1_corrected, n2_corrected, p12_corrected, p1_corrected, p2_corrected, err_corrected)
+    print_result('expected ', n_expected)
+    print_result('actual   ', n_actual, err_actual)
+    print_result('computed ', n_computed, err_computed)
+    print_result('corrected', n_corrected, err_corrected)
 
 
-def print_result(header, n12, n1, n2, p12, p1, p2, err=math.nan):
-    print(f'{header}: n12 = {round(n12)}, n1 = {round(n1)}, n2 = {round(n2)}, '
-          f'p12 = {p12:.4f}, p1 = {p1:.4f}, p2 = {p2:.4f}, err = {err:.6f}')
+def print_result(header, n, err=math.nan):
+    print(f'{header}: n1 = {round(n.v1)}, n12 = {round(n.v12)}, n2 = {round(n.v2)}, '
+          f'p1 = {n.p1:.4f}, p12 = {n.p12:.4f}, p2 = {n.p2:.4f}, err = {err:.6f}')
 
 
 if __name__ == '__main__':
-    set1 = set(range(10000))
-    set2 = set(range(5000, 20000))
+    set1 = set(range(100000))
+    set2 = set(range(50000, 200000))
 
     n = decompose2(set1, set2)
 
-    simulate(set1, set2, n, 0.1)
+    for sampling_rate in np.arange(.1, 1, .1):
+        print('=======================================================================================================')
+        print(f'sampling_rate: {sampling_rate}')
+        simulate(set1, set2, n, sampling_rate)

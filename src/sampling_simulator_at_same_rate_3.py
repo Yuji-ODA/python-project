@@ -112,8 +112,6 @@ if __name__ == '__main__':
 
     n = decompose3(set1, set2, set3)
 
-    print(n.values(), n.normalized())
-
     for sampling_rate in np.arange(.1, 1, .1):
         print('=======================================================================================================')
         print(f'sampling_rate: {sampling_rate}')
