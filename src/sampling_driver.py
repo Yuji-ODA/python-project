@@ -1,5 +1,6 @@
 import argparse
 import sys
+from itertools import combinations, chain, combinations_with_replacement
 
 import numpy as np
 
@@ -39,10 +40,10 @@ def run_simulation_2(population1, population2):
 
     n1, n12, n2, p1, p12, p2 = decompose_2(population1, population2)
 
-    for sampling_rate in np.arange(0.1, 1, 0.1):
-        print('=======================================================================================================')
-        print(f'sampling rate: {round(sampling_rate, 9)}')
-        simulate(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate)
+    for sampling_rate1, sampling_rate2 in combinations_with_replacement(np.arange(0.1, 1, 0.1), 2):
+        print('========================================================================================================')
+        print(f'sampling rate: {round(sampling_rate1, 9)}, {round(sampling_rate2, 9)}')
+        simulate(population1, population2, n1, n12, n2, p1, p12, p2, sampling_rate1, sampling_rate2)
 
 
 if __name__ == '__main__':
