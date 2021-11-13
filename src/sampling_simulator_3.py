@@ -94,6 +94,14 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #                = n_actual.v123 / (sampling_rate_mid * sampling_rate_max)
     n123_corrected = n_actual.v123 / (sampling_rate_mid * sampling_rate_max)
 
+    odds1 = sampling_rate1 / (1 - sampling_rate1)
+    odds2 = sampling_rate2 / (1 - sampling_rate2)
+    odds3 = sampling_rate3 / (1 - sampling_rate3)
+
+    r1 = sampling_rate_min / sampling_rate1
+    r2 = sampling_rate_min / sampling_rate2
+    r3 = sampling_rate_min / sampling_rate3
+
     # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
     # n12_corrected = n_expected.v12 = sampling_rate_min * n.v12
     # n_actual.v12 = n_estimated.v12 = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n_estimated.v123
@@ -103,12 +111,9 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
     #              = sampling_rate1 * sampling_rate2 / sampling_rate_min * n12_corrected + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
     # n12_corrected = (n_actual.v12 - n_actual.v123 * (1 - sampling_rate3) / sampling_rate3) / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
-    odds1 = sampling_rate1 / (1 - sampling_rate1)
-    odds2 = sampling_rate2 / (1 - sampling_rate2)
-    odds3 = sampling_rate3 / (1 - sampling_rate3)
-    n12_corrected = (n_actual.v12 - n_actual.v123 / odds3) / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
-    n13_corrected = (n_actual.v13 - n_actual.v123 / odds2) / (sampling_rate1 * sampling_rate3 / sampling_rate_min)
-    n23_corrected = (n_actual.v23 - n_actual.v123 / odds1) / (sampling_rate2 * sampling_rate3 / sampling_rate_min)
+    n12_corrected = r1 * (n_actual.v12 - n_actual.v123 / odds3) / sampling_rate2
+    n23_corrected = r2 * (n_actual.v23 - n_actual.v123 / odds1) / sampling_rate3
+    n13_corrected = r3 * (n_actual.v13 - n_actual.v123 / odds2) / sampling_rate1
 
     # n1_corrected = n_expected.v1 = sampling_rate_min * n.v1
     # n.v123 = n123_corrected / sampling_rate_min
@@ -119,17 +124,14 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #             = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n_actual.v12 - n_actual.v13 - n_actual.v123
     #             = sampling_rate1 / sampling_rate_min * (n1_corrected + n12_corrected + n13_corrected + n123_corrected) - n_actual.v12 - n_actual.v13 - n_actual.v123
     # n1_corrected = sampling_rate_min / sampling_rate1 * (n_actual.v1 + n_actual.v12 + n_actual.v13 + n_actual.v123) - (n12_corrected + n13_corrected + n123_corrected)
-    # = n_actual.v1 - (n12_corrected + n13_corrected - n_actual.v12 - n_actual.v13) + n_actual.v123 * (1 - 1 / (sampling_rate_mid * sampling_rate_max))
-    # = n_actual.v1 - (n12_corrected - n_actual.v12) - (n13_corrected - n_actual.v13) + n_actual.v123 * (1 - 1 / (sampling_rate_mid * sampling_rate_max))
-    # = n_actual.v1 - (n12_corrected - n_actual.v12) - ((n_actual.v13 - n_actual.v123 / odds_max) / (sampling_rate1 * sampling_rate3 / sampling_rate_min) - n_actual.v13) + n_actual.v123 * (1 - 1 / (sampling_rate_mid * sampling_rate_max))
-    # = n_actual.v1 - (n12_corrected - n_actual.v12) - (n_actual.v13 - n_actual.v123 / odds_max) / (sampling_rate1 * sampling_rate3 / sampling_rate_min) + n_actual.v13 + n_actual.v123 * (1 - 1 / (sampling_rate_mid * sampling_rate_max))
-    # = n_actual.v1 - (n12_corrected - n_actual.v12) - n_actual.v13 / (sampling_rate1 * sampling_rate3 / sampling_rate_min) + n_actual.v123 * (1 - 1 / (sampling_rate1 * sampling_rate3 / sampling_rate_min * odds_max)) - 1 / (sampling_rate_mid * sampling_rate_max)
-    # n12_corrected = (n_actual.v12 - n_actual.v123 / odds_max) / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
-    # n12_corrected - n_actual.v12 = n_actual.v12 * ((sampling_rate1 * sampling_rate2 / sampling_rate_min) - 1) + n_actual.v123 / odds_max / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
+    # v12について
+    # (sampling_rate_min / sampling_rate1 - 1 / sampling_rate_min / (sampling_rate1 * sampling_rate2)) * n_actual.v12
+    # (sampling_rate_min / sampling_rate1 - sampling_rate_min / sampling_rate1 / sampling_rate2) * n_actual.v12
+    # sampling_rate_min / sampling_rate1 * (1 - 1 / sampling_rate2) * n_actual.v12
+    # - sampling_rate_min / sampling_rate1 * n_actual.v12 / odds2
+    # v13についても同様
 
-
-    # sampling_rate_min / sampling_rate1 * (n_actual.v12 + n_actual.v13) - (n_actual.v12 / (sampling_rate1 * sampling_rate2 / sampling_rate_min) + n_actual.v13 / (sampling_rate1 * sampling_rate3 / sampling_rate_min))
-
+    # v123について
     # kv123 = sampling_rate_min / sampling_rate1 + \
     #         sampling_rate_min / odds3 / (sampling_rate1 * sampling_rate2) + \
     #         sampling_rate_min / odds2 / (sampling_rate1 * sampling_rate3) - \
@@ -139,57 +141,57 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #         sampling_rate_min / sampling_rate1 * (1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
     #         1 / (sampling_rate_mid * sampling_rate_max)
     #
-    # kv123 = sampling_rate_min / sampling_rate1 * (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
     #         1 / (sampling_rate_mid * sampling_rate_max)
     #
-    # kv123 = sampling_rate_min / sampling_rate1 * (1 + 1 / (sampling_rate3 / (1 - sampling_rate3) * sampling_rate2) + 1 / (sampling_rate2 / (1 - sampling_rate2) * sampling_rate3)) - \
-    #         1 / (sampling_rate_mid * sampling_rate_max)
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #         sampling_rate1 / (sampling_rate_min * sampling_rate_mid * sampling_rate_max))
     #
-    # kv123 = sampling_rate_min / sampling_rate1 * (1 + 1 / (sampling_rate3 / (1 - sampling_rate3) * sampling_rate2) + 1 / (sampling_rate2 / (1 - sampling_rate2) * sampling_rate3)) - \
-    #         1 / (sampling_rate_mid * sampling_rate_max)
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #         sampling_rate1 / (sampling_rate1 * sampling_rate2 * sampling_rate3))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #         1 / (sampling_rate2 * sampling_rate3))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (sampling_rate3 / (1 - sampling_rate3) * sampling_rate2) + \
+    #         1 / (sampling_rate2 / (1 - sampling_rate2) * sampling_rate3) - \
+    #         1 / (sampling_rate2 * sampling_rate3))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + (1 - sampling_rate3) / (sampling_rate3 * sampling_rate2) + \
+    #         (1 - sampling_rate2) / (sampling_rate2 * sampling_rate3) - \
+    #         1 / (sampling_rate2 * sampling_rate3))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + (1 - sampling_rate2 - sampling_rate3) / (sampling_rate3 * sampling_rate2))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (sampling_rate3 * sampling_rate2) - 1 / sampling_rate2 - 1 / sampling_rate3)
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 - 1 / sampling_rate2 - 1 / sampling_rate3 * (1 - 1 / sampling_rate2))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (- 1 / odds21 + 1 / sampling_rate3 * 1 / odds2)
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 / odds2) * (1 - 1 / sampling_rate3))
+    #
+    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #         (1 / odds2) * (1 / odds3)
+    #
 
-    kv123 = (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
-            1 / (sampling_rate_mid * sampling_rate_max)
-    kv231 = (1 + 1 / (odds3 * sampling_rate1) + 1 / (odds1 * sampling_rate3)) - \
-            1 / (sampling_rate_mid * sampling_rate_max)
-    kv312 = (1 + 1 / (odds1 * sampling_rate2) + 1 / (odds2 * sampling_rate1)) - \
-            1 / (sampling_rate_mid * sampling_rate_max)
-
-    n1_corrected = sampling_rate_min / sampling_rate1 * (n_actual.v1 - (n_actual.v12 / odds2 + n_actual.v13 / odds3) + n_actual.v123 * kv123)
-    n2_corrected = sampling_rate_min / sampling_rate2 * (n_actual.v2 - (n_actual.v12 / odds1 + n_actual.v23 / odds3) + n_actual.v123 * kv231)
-    n3_corrected = sampling_rate_min / sampling_rate3 * (n_actual.v3 - (n_actual.v13 / odds1 + n_actual.v23 / odds2) + n_actual.v123 * kv312)
+    n1_corrected = r1 * (n_actual.v1 - (n_actual.v12 / odds2 + n_actual.v13 / odds3) + n_actual.v123 / odds2 / odds3)
+    n2_corrected = r2 * (n_actual.v2 - (n_actual.v12 / odds1 + n_actual.v23 / odds3) + n_actual.v123 / odds1 / odds3)
+    n3_corrected = r3 * (n_actual.v3 - (n_actual.v13 / odds1 + n_actual.v23 / odds2) + n_actual.v123 / odds1 / odds2)
 
     return Cardinality3(n1_corrected, n2_corrected, n3_corrected,
                         n12_corrected, n13_corrected, n23_corrected, n123_corrected)
-
-
-    # 重複分の取りこぼしを補正
-    # 抽出率は低いほうに合わせてサイズを落とし想定に合わせる
-    # n_computed.v12 = n_actual.v12 = sampling_rate_smaller * sampling_rate_greater * n.v12
-    # n12_corrected = n_expected.v12 = sampling_rate_smaller * n.v12
-    #               = sampling_rate_smaller * n_actual.v12 / (sampling_rate_smaller * sampling_rate_greater)
-    # n12_corrected = n_actual.v12 / sampling_rate_max
-
-    # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
-    # n_computed.v12 = n_actual.v12 = sampling_rate_smaller * sampling_rate_greater * n.v12
-    # n1_corrected = n_expected.v1 = n.v1 * sampling_rate_smaller
-    # n_computed.v1 = n_actual.v1 = n.size1 * sampling_rate1 - n_actual.v12
-    #               = (n.v1 + n.v12) * sampling_rate1 - n_actual.v12
-    #               = n1_corrected / sampling_rate_smaller * sampling_rate1 + n_actual.v12 / (sampling_rate_smaller * sampling_rate_greater) * sampling_rate1 - n_actual.v12
-    #               = n1_corrected / sampling_rate_smaller * sampling_rate1 + n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1)
-    # n1_corrected = sampling_rate_smaller / sampling_rate1 * (n_actual.v1 - n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1))
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - sampling_rate_smaller / sampling_rate1 * n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1))
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - n_actual.v12 * (1 / sampling_rate_greater - sampling_rate_smaller / sampling_rate1)
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - n_actual.v12 * (1 - sampling_rate_smaller / sampling_rate1 * sampling_rate_greater) / sampling_rate_greater
-    # r1 = sampling_rate_min / sampling_rate1
-    # odds1 = sampling_rate_max / (1 - r1 * sampling_rate_max)
-    # n1_corrected = r1 * n_actual.v1 - n_actual.v12 / odds1
-    #
-    # r2 = sampling_rate_min / sampling_rate2
-    # odds2 = sampling_rate_max / (1 - r2 * sampling_rate_max)
-    # n2_corrected = r2 * n_actual.v2 - n_actual.v12 / odds2
-    #
-    # return Cardinality2(n1_corrected, n12_corrected, n2_corrected)
 
 
 if __name__ == '__main__':
