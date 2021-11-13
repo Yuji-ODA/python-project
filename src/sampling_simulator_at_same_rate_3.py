@@ -23,21 +23,21 @@ def simulate(population1, population2, population3, n, sampling_rate):
     # 個別サンプリングの場合の理論値の計算
     # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの３乗となる
     # これに母集合の重複数をかけて重複数の期待値を得る
-    n123_computed = (sampling_rate ** 3) * n.v123
+    n123_estimated = (sampling_rate ** 3) * n.v123
 
     # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの２乗となる
     # これに母集合の重複数をかけて重複数の期待値を得る
-    n12_computed = (sampling_rate ** 2) * (n.v12 + n.v123) - n123_computed
-    n13_computed = (sampling_rate ** 2) * (n.v13 + n.v123) - n123_computed
-    n23_computed = (sampling_rate ** 2) * (n.v23 + n.v123) - n123_computed
+    n12_estimated = (sampling_rate ** 2) * (n.v12 + n.v123) - n123_estimated
+    n13_estimated = (sampling_rate ** 2) * (n.v13 + n.v123) - n123_estimated
+    n23_estimated = (sampling_rate ** 2) * (n.v23 + n.v123) - n123_estimated
 
     # サンプリングの総数から重複分を引く
-    n1_computed = sampling_rate * n.size1 - n12_computed - n13_computed - n123_computed
-    n2_computed = sampling_rate * n.size2 - n12_computed - n23_computed - n123_computed
-    n3_computed = sampling_rate * n.size3 - n13_computed - n23_computed - n123_computed
+    n1_computed = sampling_rate * n.size1 - n12_estimated - n13_estimated - n123_estimated
+    n2_computed = sampling_rate * n.size2 - n12_estimated - n23_estimated - n123_estimated
+    n3_computed = sampling_rate * n.size3 - n13_estimated - n23_estimated - n123_estimated
 
-    n_computed = Cardinality3(n1_computed, n2_computed, n3_computed, n12_computed, n13_computed, n23_computed,
-                              n123_computed)
+    n_estimated = Cardinality3(n1_computed, n2_computed, n3_computed, n12_estimated, n13_estimated, n23_estimated,
+                              n123_estimated)
 
     # 補正
     # 重複分の取りこぼしを補正
@@ -89,12 +89,12 @@ def simulate(population1, population2, population3, n, sampling_rate):
     # 誤差計算
     probs_expected = n_expected.normalized()
     err_actual = norm(n_actual.normalized() - probs_expected)
-    err_computed = norm(n_computed.normalized() - probs_expected)
+    err_estimated = norm(n_estimated.normalized() - probs_expected)
     err_corrected = norm(n_corrected.normalized() - probs_expected)
 
     print_result('expected ', n_expected)
     print_result('actual   ', n_actual, err_actual)
-    print_result('computed ', n_computed, err_computed)
+    print_result('estimated', n_estimated, err_estimated)
     print_result('corrected', n_corrected, err_corrected)
 
 
