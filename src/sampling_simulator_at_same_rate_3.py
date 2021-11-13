@@ -32,11 +32,11 @@ def simulate(population1, population2, population3, n, sampling_rate):
     n23_estimated = (sampling_rate ** 2) * (n.v23 + n.v123) - n123_estimated
 
     # サンプリングの総数から重複分を引く
-    n1_computed = sampling_rate * n.size1 - n12_estimated - n13_estimated - n123_estimated
-    n2_computed = sampling_rate * n.size2 - n12_estimated - n23_estimated - n123_estimated
-    n3_computed = sampling_rate * n.size3 - n13_estimated - n23_estimated - n123_estimated
+    n1_estimated = sampling_rate * n.size1 - n12_estimated - n13_estimated - n123_estimated
+    n2_estimated = sampling_rate * n.size2 - n12_estimated - n23_estimated - n123_estimated
+    n3_estimated = sampling_rate * n.size3 - n13_estimated - n23_estimated - n123_estimated
 
-    n_estimated = Cardinality3(n1_computed, n2_computed, n3_computed, n12_estimated, n13_estimated, n23_estimated,
+    n_estimated = Cardinality3(n1_estimated, n2_estimated, n3_estimated, n12_estimated, n13_estimated, n23_estimated,
                               n123_estimated)
 
     # 補正

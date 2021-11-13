@@ -40,7 +40,7 @@ def simulate(population1: Set[Any], population2: Set[Any], n: Cardinality2,
 
 
 def print_result(header: str, n: Cardinality2, err: float = math.nan):
-    print(f'{header}: n1 = {round(n.v1)}, n12 = {round(n.v1)}, n2 = {round(n.v2)}, '
+    print(f'{header}: n1 = {round(n.v1)}, n12 = {round(n.v12)}, n2 = {round(n.v2)}, '
           f'p1 = {n.p1:.4f}, p12 = {n.p12:.4f}, p2 = {n.p2:.4f}, err = {err:.6f}')
 
 
