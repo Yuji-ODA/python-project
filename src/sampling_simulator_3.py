@@ -45,7 +45,7 @@ def print_result(header: str, n: Cardinality3, err: float = math.nan):
     print(f'{header}: n1 = {round(n.v1)}, n2 = {round(n.v2)}, n3 = {round(n.v3)}, n12 = {round(n.v12)}, '
           f'n13 = {round(n.v13)}, n23 = {round(n.v23)}, n123 = {round(n.v123)}, '
           f'p1 = {n.p1:.4f}, p2 = {n.p2:.4f}, p3 = {n.p3:.4f}, '
-          f'p12 = {n.p12:.4f}, p13 = {n.p13:.4f}, p123 = {n.p23:.4f}, p123 = {n.p123:.4f}, err = {err:.6f}')
+          f'p12 = {n.p12:.4f}, p13 = {n.p13:.4f}, p23 = {n.p23:.4f}, p123 = {n.p123:.4f}, err = {err:.6f}')
 
 
 # 個別サンプリング
@@ -98,10 +98,6 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     odds2 = sampling_rate2 / (1 - sampling_rate2)
     odds3 = sampling_rate3 / (1 - sampling_rate3)
 
-    r1 = sampling_rate_min / sampling_rate1
-    r2 = sampling_rate_min / sampling_rate2
-    r3 = sampling_rate_min / sampling_rate3
-
     # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
     # n12_corrected = n_expected.v12 = sampling_rate_min * n.v12
     # n_actual.v12 = n_estimated.v12 = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n_estimated.v123
@@ -111,9 +107,13 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
     #              = sampling_rate1 * sampling_rate2 / sampling_rate_min * n12_corrected + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
     # n12_corrected = (n_actual.v12 - n_actual.v123 * (1 - sampling_rate3) / sampling_rate3) / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
-    n12_corrected = r1 * (n_actual.v12 - n_actual.v123 / odds3) / sampling_rate2
-    n23_corrected = r2 * (n_actual.v23 - n_actual.v123 / odds1) / sampling_rate3
-    n13_corrected = r3 * (n_actual.v13 - n_actual.v123 / odds2) / sampling_rate1
+    r12 = sampling_rate_min / (sampling_rate1 * sampling_rate2)
+    r13 = sampling_rate_min / (sampling_rate1 * sampling_rate3)
+    r23 = sampling_rate_min / (sampling_rate2 * sampling_rate3)
+
+    n12_corrected = r12 * (n_actual.v12 - n_actual.v123 / odds3)
+    n13_corrected = r13 * (n_actual.v13 - n_actual.v123 / odds2)
+    n23_corrected = r23 * (n_actual.v23 - n_actual.v123 / odds1)
 
     # n1_corrected = n_expected.v1 = sampling_rate_min * n.v1
     # n.v123 = n123_corrected / sampling_rate_min
@@ -184,7 +184,10 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #
     # kv123 = sampling_rate_min / sampling_rate1 * \
     #         (1 / odds2) * (1 / odds3)
-    #
+
+    r1 = sampling_rate_min / sampling_rate1
+    r2 = sampling_rate_min / sampling_rate2
+    r3 = sampling_rate_min / sampling_rate3
 
     n1_corrected = r1 * (n_actual.v1 - (n_actual.v12 / odds2 + n_actual.v13 / odds3) + n_actual.v123 / odds2 / odds3)
     n2_corrected = r2 * (n_actual.v2 - (n_actual.v12 / odds1 + n_actual.v23 / odds3) + n_actual.v123 / odds1 / odds3)
