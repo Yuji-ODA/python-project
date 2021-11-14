@@ -56,7 +56,7 @@ def run_simulations(set1, set2, set3):
               '========================================================================================================'
               '====')
         print(f'sampling rate: {round(sampling_rate1, 9)} {round(sampling_rate2, 9)} {round(sampling_rate3, 9)}')
-        simulate(set1, set2, set3, n, sampling_rate1, sampling_rate2, sampling_rate3)
+        simulate(set1, set2, set3, sampling_rate1, sampling_rate2, sampling_rate3)
 
 
 if __name__ == '__main__':

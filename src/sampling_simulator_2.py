@@ -7,11 +7,13 @@ from numpy.linalg import norm
 from src.sampling_simulator_util import array, decompose2, Cardinality2
 
 
-def simulate(population1: Set[Any], population2: Set[Any], n: Cardinality2,
+def simulate(population1: Set[Any], population2: Set[Any],
              sampling_rate1: float, sampling_rate2: Union[float, None] = None):
 
     if sampling_rate2 is None:
         sampling_rate2 = sampling_rate1
+
+    n = decompose2(population1, population2)
 
     # 理論値の計算
     # 抽出率が違う場合は考えられないので、ここでは小さい方の値である場合を想定する

@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 from src.sampling_simulator_2 import simulate
-from src.sampling_simulator_util import array, decompose2
+from src.sampling_simulator_util import array
 
 
 def main():
@@ -36,14 +36,12 @@ def run_simulations(p1, p12, p2, total_size):
     n1, n12, n2 = (round(n) for n in (array(p1, p12, p2) * total_size))
     set1, set2 = set(range(n1 + n12)), set(range(n1, n1 + n12 + n2))
 
-    n = decompose2(set1, set2)
-
     # for sampling_rate1, sampling_rate2 in combinations_with_replacement(np.arange(0.1, 1, 0.1), 2):
     for sampling_rate1, sampling_rate2 in itertools.product(np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2)):
         print('========================================================================================================'
               '===')
         print(f'sampling rate: {round(sampling_rate1, 9)} {round(sampling_rate2, 9)}')
-        simulate(set1, set2, n, sampling_rate1, sampling_rate2)
+        simulate(set1, set2, sampling_rate1, sampling_rate2)
 
 
 if __name__ == '__main__':

@@ -9,11 +9,13 @@ from numpy.linalg import norm
 from src.sampling_simulator_util import Cardinality3, decompose3
 
 
-def simulate(population1: Set[Any], population2: Set[Any], population3: Set[Any], n: Cardinality3,
-             sampling_rate1: float, sampling_rate2: Union[float, None] = None, sampling_rate3: Union[float, None] = None):
+def simulate(population1: Set[Any], population2: Set[Any], population3: Set[Any], sampling_rate1: float,
+             sampling_rate2: Union[float, None] = None, sampling_rate3: Union[float, None] = None):
 
     if sampling_rate2 is None:
         sampling_rate2 = sampling_rate3 = sampling_rate1
+
+    n = decompose3(population1, population2, population3)
 
     # 理論値の計算
     # 抽出率が違う場合は考えられないので、ここでは最小の値である場合を想定する
