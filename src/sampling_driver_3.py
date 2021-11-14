@@ -39,20 +39,17 @@ def main():
 
 
 def generate_testsets(p1, p2, p3, p12, p13, p23, p123, total_size):
-    lists = ([], [], [])
-
+    sets = (set(), set(), set())
     for i in range(total_size):
         for targets in choices(([0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2]), (p1, p2, p3, p12, p13, p23, p123)):
             for target in targets:
-                lists[target].append(i)
-
-    return list(map(set, lists))
+                sets[target].add(i)
+    return sets
 
 
 def run_simulations(set1, set2, set3):
     n = decompose3(set1, set2, set3)
 
-    # for sampling_rate1, sampling_rate2 in combinations_with_replacement(np.arange(0.1, 1, 0.1), 2):
     for sampling_rate1, sampling_rate2, sampling_rate3 \
             in itertools.product(np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2)):
         print('========================================================================================================'
