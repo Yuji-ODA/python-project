@@ -53,8 +53,11 @@ def run_simulations(set1, set2, set3):
     n = decompose3(set1, set2, set3)
 
     # for sampling_rate1, sampling_rate2 in combinations_with_replacement(np.arange(0.1, 1, 0.1), 2):
-    for sampling_rate1, sampling_rate2, sampling_rate3 in itertools.product(np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2)):
-        print('========================================================================================================')
+    for sampling_rate1, sampling_rate2, sampling_rate3 \
+            in itertools.product(np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2)):
+        print('========================================================================================================'
+              '========================================================================================================'
+              '====')
         print(f'sampling rate: {round(sampling_rate1, 9)} {round(sampling_rate2, 9)} {round(sampling_rate3, 9)}')
         simulate(set1, set2, set3, n, sampling_rate1, sampling_rate2, sampling_rate3)
 

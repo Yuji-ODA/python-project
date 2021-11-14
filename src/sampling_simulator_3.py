@@ -65,16 +65,14 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, sampling_rate3: 
     # これに母集合の重複数をかけて重複数の期待値を得る
     n123_estimated = sampling_rate1 * sampling_rate2 * sampling_rate3 * n.v123
 
-    # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの積となる
-    # これに母集合の重複数をかけて重複数の期待値を得る
+    # サンプリングの総数から重複分を引く
     n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n123_estimated
     n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + n.v123) - n123_estimated
     n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + n.v123) - n123_estimated
 
-    # サンプリングの総数から重複分を引く
-    n1_estimated = sampling_rate1 * n.size1 - n12_estimated - n13_estimated - n123_estimated
-    n2_estimated = sampling_rate2 * n.size2 - n12_estimated - n23_estimated - n123_estimated
-    n3_estimated = sampling_rate3 * n.size3 - n13_estimated - n23_estimated - n123_estimated
+    n1_estimated = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n12_estimated - n13_estimated - n123_estimated
+    n2_estimated = sampling_rate2 * (n.v2 + n.v12 + n.v23 + n.v123) - n12_estimated - n23_estimated - n123_estimated
+    n3_estimated = sampling_rate3 * (n.v3 + n.v13 + n.v23 + n.v123) - n13_estimated - n23_estimated - n123_estimated
 
     return Cardinality3(n1_estimated, n2_estimated, n3_estimated,
                         n12_estimated, n13_estimated, n23_estimated, n123_estimated)
@@ -105,8 +103,11 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #              = sampling_rate1 * sampling_rate2 * n.v12 + sampling_rate1 * sampling_rate2 * n.v123 - n_actual.v123
     #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 / sampling_rate3 - n_actual.v123
     #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
-    #              = sampling_rate1 * sampling_rate2 / sampling_rate_min * n12_corrected + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
-    # n12_corrected = (n_actual.v12 - n_actual.v123 * (1 - sampling_rate3) / sampling_rate3) / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
+    #              = sampling_rate1 * sampling_rate2 / sampling_rate_min * n12_corrected +
+    #                n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
+    # よって
+    # n12_corrected = (n_actual.v12 - n_actual.v123 * (1 - sampling_rate3) / sampling_rate3)
+    #                / (sampling_rate1 * sampling_rate2 / sampling_rate_min)
     r12 = sampling_rate_min / (sampling_rate1 * sampling_rate2)
     r13 = sampling_rate_min / (sampling_rate1 * sampling_rate3)
     r23 = sampling_rate_min / (sampling_rate2 * sampling_rate3)
@@ -122,68 +123,56 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     # n_actual.v1 = n_estimated.v1 = sampling_rate1 * n.size1 - n12_estimated - n13_estimated - n123_estimated
     #             = sampling_rate1 * n.size1 - n_actual.v12 - n_actual.v13 - n_actual.v123
     #             = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n_actual.v12 - n_actual.v13 - n_actual.v123
-    #             = sampling_rate1 / sampling_rate_min * (n1_corrected + n12_corrected + n13_corrected + n123_corrected) - n_actual.v12 - n_actual.v13 - n_actual.v123
-    # n1_corrected = sampling_rate_min / sampling_rate1 * (n_actual.v1 + n_actual.v12 + n_actual.v13 + n_actual.v123) - (n12_corrected + n13_corrected + n123_corrected)
+    #             = sampling_rate1 / sampling_rate_min * (n1_corrected + n12_corrected + n13_corrected + n123_corrected)
+    #              - n_actual.v12 - n_actual.v13 - n_actual.v123
+    # よって
+    # n1_corrected = sampling_rate_min / sampling_rate1 * (n_actual.v1 + n_actual.v12 + n_actual.v13 + n_actual.v123)
+    #               - (n12_corrected + n13_corrected + n123_corrected)
     # v12について
-    # (sampling_rate_min / sampling_rate1 - 1 / sampling_rate_min / (sampling_rate1 * sampling_rate2)) * n_actual.v12
-    # (sampling_rate_min / sampling_rate1 - sampling_rate_min / sampling_rate1 / sampling_rate2) * n_actual.v12
-    # sampling_rate_min / sampling_rate1 * (1 - 1 / sampling_rate2) * n_actual.v12
-    # - sampling_rate_min / sampling_rate1 * n_actual.v12 / odds2
+    # kv12 = (sampling_rate_min / sampling_rate1 -
+    #        1 / sampling_rate_min / (sampling_rate1 * sampling_rate2)) * n_actual.v12
+    #      = (sampling_rate_min / sampling_rate1 - sampling_rate_min / sampling_rate1 / sampling_rate2) * n_actual.v12
+    #      = sampling_rate_min / sampling_rate1 * (1 - 1 / sampling_rate2) * n_actual.v12
+    #       - sampling_rate_min / sampling_rate1 * n_actual.v12 / odds2
+    #
     # v13についても同様
-
+    #
     # v123について
-    # kv123 = sampling_rate_min / sampling_rate1 + \
-    #         sampling_rate_min / odds3 / (sampling_rate1 * sampling_rate2) + \
-    #         sampling_rate_min / odds2 / (sampling_rate1 * sampling_rate3) - \
+    # kv123 = sampling_rate_min / sampling_rate1 +
+    #         sampling_rate_min / odds3 / (sampling_rate1 * sampling_rate2) +
+    #         sampling_rate_min / odds2 / (sampling_rate1 * sampling_rate3) -
     #         1 / (sampling_rate_mid * sampling_rate_max)
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 + \
-    #         sampling_rate_min / sampling_rate1 * (1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
+    #       = sampling_rate_min / sampling_rate1 +
+    #         sampling_rate_min / sampling_rate1 * (1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) -
     #         1 / (sampling_rate_mid * sampling_rate_max)
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) - \
+    #       = sampling_rate_min / sampling_rate1 * (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3)) -
     #         1 / (sampling_rate_mid * sampling_rate_max)
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #       = sampling_rate_min / sampling_rate1 *
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) -
     #         sampling_rate1 / (sampling_rate_min * sampling_rate_mid * sampling_rate_max))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #       = sampling_rate_min / sampling_rate1 *
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) -
     #         sampling_rate1 / (sampling_rate1 * sampling_rate2 * sampling_rate3))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) - \
+    #       = sampling_rate_min / sampling_rate1 *
+    #         (1 + 1 / (odds3 * sampling_rate2) + 1 / (odds2 * sampling_rate3) -
     #         1 / (sampling_rate2 * sampling_rate3))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + 1 / (sampling_rate3 / (1 - sampling_rate3) * sampling_rate2) + \
-    #         1 / (sampling_rate2 / (1 - sampling_rate2) * sampling_rate3) - \
+    #       = sampling_rate_min / sampling_rate1 * \
+    #         (1 + 1 / (sampling_rate3 / (1 - sampling_rate3) * sampling_rate2) +
+    #         1 / (sampling_rate2 / (1 - sampling_rate2) * sampling_rate3) -
     #         1 / (sampling_rate2 * sampling_rate3))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 + (1 - sampling_rate3) / (sampling_rate3 * sampling_rate2) + \
-    #         (1 - sampling_rate2) / (sampling_rate2 * sampling_rate3) - \
+    #       = sampling_rate_min / sampling_rate1 * \
+    #         (1 + (1 - sampling_rate3) / (sampling_rate3 * sampling_rate2) +
+    #         (1 - sampling_rate2) / (sampling_rate2 * sampling_rate3) -
     #         1 / (sampling_rate2 * sampling_rate3))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #       = sampling_rate_min / sampling_rate1 *
     #         (1 + (1 - sampling_rate2 - sampling_rate3) / (sampling_rate3 * sampling_rate2))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #       = sampling_rate_min / sampling_rate1 *
     #         (1 + 1 / (sampling_rate3 * sampling_rate2) - 1 / sampling_rate2 - 1 / sampling_rate3)
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
+    #       = sampling_rate_min / sampling_rate1 *
     #         (1 - 1 / sampling_rate2 - 1 / sampling_rate3 * (1 - 1 / sampling_rate2))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (- 1 / odds21 + 1 / sampling_rate3 * 1 / odds2)
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 / odds2) * (1 - 1 / sampling_rate3))
-    #
-    # kv123 = sampling_rate_min / sampling_rate1 * \
-    #         (1 / odds2) * (1 / odds3)
+    #       = sampling_rate_min / sampling_rate1 * (-1 / odds21 + 1 / sampling_rate3 * 1 / odds2)
+    #       = sampling_rate_min / sampling_rate1 * (1 / odds2) * (1 - 1 / sampling_rate3))
+    #       = sampling_rate_min / sampling_rate1 * (1 / odds2) * (1 / odds3)
 
     r1 = sampling_rate_min / sampling_rate1
     r2 = sampling_rate_min / sampling_rate2
@@ -204,7 +193,8 @@ if __name__ == '__main__':
 
     n = decompose3(set1, set2, set3)
 
-    for sampling_rate1, sampling_rate2, sampling_rate3 in product(np.arange(.1, 1, .4), np.arange(.1, 1, .4), np.arange(.1, 1, .4)):
+    for sampling_rate1, sampling_rate2, sampling_rate3 \
+            in product(np.arange(.1, 1, .4), np.arange(.1, 1, .4), np.arange(.1, 1, .4)):
         print('=======================================================================================================')
         print(f'sampling_rate1: {sampling_rate1}, sampling_rate2: {sampling_rate2}, sampling_rate1: {sampling_rate3}')
         simulate(set1, set2, set3, n, sampling_rate1, sampling_rate2, sampling_rate3)
