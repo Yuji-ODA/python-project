@@ -13,11 +13,11 @@ def simulate(population1: Set[Any], population2: Set[Any],
 
     n = decompose2(population1, population2)
 
-    # 個別サンプリングの場合の理論値の計算
-    n_estimated = do_estimation(sampling_rate1, sampling_rate2, n)
-
     # 個別サンプリングの結果を取得する
     n_actual = do_sampling(population1, population2, sampling_rate1, sampling_rate2)
+
+    # 個別サンプリングの場合の理論値の計算
+    n_estimated = do_estimation(sampling_rate1, sampling_rate2, n)
 
     # 補正計算
     n_corrected = do_correction(n_actual, sampling_rate1, sampling_rate2)
@@ -49,6 +49,21 @@ def do_sampling(population1: Set[Any], population2: Set[Any],
     return decompose2(sample1, sample2)
 
 
+# 個別サンプリングの場合の理論値の計算
+def do_estimation(sampling_rate1: float, sampling_rate2: float, n: Cardinality2) -> Cardinality2:
+    # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの積となる
+    # これに母集合の重複数をかけて重複数の期待値を得る
+    n12_estimated = sampling_rate1 * sampling_rate2 * n.v12
+
+    # サンプリングの総数から重複分を引く
+    # n1_estimated = sampling_rate1 * (n.v1 + n.v12) - n12_estimated
+    n1_estimated = sampling_rate1 * (n.v1 + (1 - sampling_rate2) * n.v12)
+    # n2_estimated = sampling_rate2 * (n.v12 + n.v2) - n12_estimated
+    n2_estimated = sampling_rate2 * (n.v2 + (1 - sampling_rate1) * n.v12)
+
+    return Cardinality2(n1_estimated, n12_estimated, n2_estimated)
+
+
 # 補正計算
 def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2: float) -> Cardinality2:
 
@@ -73,18 +88,3 @@ def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2:
     n2_corrected = (n_actual.v2 - n_actual.v12 / odds1) / sampling_rate2
 
     return Cardinality2(n1_corrected, n12_corrected, n2_corrected)
-
-
-# 個別サンプリングの場合の理論値の計算
-def do_estimation(sampling_rate1: float, sampling_rate2: float, n: Cardinality2) -> Cardinality2:
-    # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの積となる
-    # これに母集合の重複数をかけて重複数の期待値を得る
-    n12_estimated = sampling_rate1 * sampling_rate2 * n.v12
-
-    # サンプリングの総数から重複分を引く
-    # n1_estimated = sampling_rate1 * (n.v1 + n.v12) - n12_estimated
-    n1_estimated = sampling_rate1 * (n.v1 + (1 - sampling_rate2) * n.v12)
-    # n2_estimated = sampling_rate2 * (n.v12 + n.v2) - n12_estimated
-    n2_estimated = sampling_rate2 * (n.v2 + (1 - sampling_rate1) * n.v12)
-
-    return Cardinality2(n1_estimated, n12_estimated, n2_estimated)

@@ -9,15 +9,18 @@ def simulate(population1: Set[Any], population2: Set[Any], population3: Set[Any]
              sampling_rate2: Union[float, None] = None, sampling_rate3: Union[float, None] = None):
 
     if sampling_rate2 is None:
-        sampling_rate2 = sampling_rate3 = sampling_rate1
+        sampling_rate2 = sampling_rate1
+
+    if sampling_rate3 is None:
+        sampling_rate3 = sampling_rate1
 
     n = decompose3(population1, population2, population3)
 
-    # 個別サンプリングの場合の理論値の計算
-    n_estimated = do_estimation(sampling_rate1, sampling_rate2, sampling_rate3, n)
-
     # 個別サンプリングの結果を取得する
     n_actual = do_sampling(population1, population2, population3, sampling_rate1, sampling_rate2, sampling_rate3)
+
+    # 個別サンプリングの場合の理論値の計算
+    n_estimated = do_estimation(sampling_rate1, sampling_rate2, sampling_rate3, n)
 
     # 補正計算
     n_corrected = do_correction(n_actual, sampling_rate1, sampling_rate2, sampling_rate3)
@@ -69,13 +72,13 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, sampling_rate3: 
 
     # n1_estimated = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n12_estimated - n13_estimated - n123_estimated
     n1_estimated = sampling_rate1 * (n.v1 + (1 - sampling_rate2) * n.v12 + (1 - sampling_rate3) * n.v13) - \
-                   sampling_rate1 * (sampling_rate2 + sampling_rate3 - sampling_rate2 * sampling_rate3) * n.v123
+                   sampling_rate1 * (1 - (1 - sampling_rate2) * (1 - sampling_rate3)) * n.v123
     # n2_estimated = sampling_rate2 * (n.v2 + n.v12 + n.v23 + n.v123) - n12_estimated - n23_estimated - n123_estimated
     n2_estimated = sampling_rate2 * (n.v2 + (1 - sampling_rate1) * n.v12 + (1 - sampling_rate3) * n.v23) - \
-                   sampling_rate2 * (sampling_rate1 + sampling_rate3 - sampling_rate1 * sampling_rate3) * n.v123
+                   sampling_rate2 * (1 - (1 - sampling_rate1) * (1 - sampling_rate3)) * n.v123
     # n3_estimated = sampling_rate3 * (n.v3 + n.v13 + n.v23 + n.v123) - n13_estimated - n23_estimated - n123_estimated
     n3_estimated = sampling_rate3 * (n.v3 + (1 - sampling_rate1) * n.v13 + (1 - sampling_rate2) * n.v23) - \
-                   sampling_rate3 * (sampling_rate1 + sampling_rate2 - sampling_rate1 * sampling_rate2) * n.v123
+                   sampling_rate3 * (1 - (1 - sampling_rate1) * (1 - sampling_rate2)) * n.v123
 
     return Cardinality3(n1_estimated, n2_estimated, n3_estimated,
                         n12_estimated, n13_estimated, n23_estimated, n123_estimated)
