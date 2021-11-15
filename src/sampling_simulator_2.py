@@ -15,10 +15,6 @@ def simulate(population1: Set[Any], population2: Set[Any],
 
     n = decompose2(population1, population2)
 
-    # 理論値の計算
-    # 抽出率が違う場合は考えられないので、ここでは小さい方の値である場合を想定する
-    n_expected = n.scaled(min(sampling_rate1, sampling_rate2))
-
     # 個別サンプリングの場合の理論値の計算
     n_estimated = do_estimation(sampling_rate1, sampling_rate2, n)
 
@@ -29,13 +25,13 @@ def simulate(population1: Set[Any], population2: Set[Any],
     n_corrected = do_correction(n_actual, sampling_rate1, sampling_rate2)
 
     # 誤差計算
-    probabilities_expected = n_expected.normalized()
+    probabilities_expected = n.normalized()
     err_actual = norm(n_actual.normalized() - probabilities_expected)
 
     err_computed = norm(n_estimated.normalized() - probabilities_expected)
     err_corrected = norm(n_corrected.normalized() - probabilities_expected)
 
-    print_result('expected ', n_expected)
+    print_result('expected ', n)
     print_result('actual   ', n_actual, err_actual)
     print_result('estimated', n_estimated, err_computed)
     print_result('corrected', n_corrected, err_corrected)
@@ -58,34 +54,25 @@ def do_sampling(population1: Set[Any], population2: Set[Any],
 # 補正計算
 def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2: float) -> Cardinality2:
 
-    sampling_rate_smaller = min(sampling_rate1, sampling_rate2)
-    sampling_rate_greater = max(sampling_rate1, sampling_rate2)
+    odds1 = sampling_rate1 / (1 - sampling_rate1)
+    odds2 = sampling_rate2 / (1 - sampling_rate2)
 
     # 重複分の取りこぼしを補正
-    # 抽出率は低いほうに合わせてサイズを落とし想定に合わせる
-    # n_computed.v12 = n_actual.v12 = sampling_rate_smaller * sampling_rate_greater * n.v12
-    # n12_corrected = n_expected.v12 = sampling_rate_smaller * n.v12
-    #               = sampling_rate_smaller * n_actual.v12 / (sampling_rate_smaller * sampling_rate_greater)
-    n12_corrected = n_actual.v12 / sampling_rate_greater
+    # n_estimated.v12 = n_actual.v12 = sampling_rate1 * sampling_rate2 * n.v12
+    # n12_corrected = n.v12
+    #               = n_actual.v12 / (sampling_rate1 * sampling_rate2)
+    n12_corrected = n_actual.v12 / (sampling_rate1 * sampling_rate2)
 
     # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
-    # n_computed.v12 = n_actual.v12 = sampling_rate_smaller * sampling_rate_greater * n.v12
-    # n1_corrected = n_expected.v1 = n.v1 * sampling_rate_smaller
-    # n_computed.v1 = n_actual.v1 = n.size1 * sampling_rate1 - n_actual.v12
-    #               = (n.v1 + n.v12) * sampling_rate1 - n_actual.v12
-    #               = n1_corrected / sampling_rate_smaller * sampling_rate1 + n_actual.v12 / (sampling_rate_smaller * sampling_rate_greater) * sampling_rate1 - n_actual.v12
-    #               = n1_corrected / sampling_rate_smaller * sampling_rate1 + n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1)
-    # n1_corrected = sampling_rate_smaller / sampling_rate1 * (n_actual.v1 - n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1))
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - sampling_rate_smaller / sampling_rate1 * n_actual.v12 * (sampling_rate1 / (sampling_rate_smaller * sampling_rate_greater) - 1))
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - n_actual.v12 * (1 / sampling_rate_greater - sampling_rate_smaller / sampling_rate1)
-    #              = sampling_rate_smaller / sampling_rate1 * n_actual.v1 - n_actual.v12 * (1 - sampling_rate_smaller / sampling_rate1 * sampling_rate_greater) / sampling_rate_greater
-    r1 = sampling_rate_smaller / sampling_rate1
-    odds1 = sampling_rate_greater / (1 - r1 * sampling_rate_greater)
-    n1_corrected = r1 * n_actual.v1 - n_actual.v12 / odds1
-
-    r2 = sampling_rate_smaller / sampling_rate2
-    odds2 = sampling_rate_greater / (1 - r2 * sampling_rate_greater)
-    n2_corrected = r2 * n_actual.v2 - n_actual.v12 / odds2
+    # n1_corrected = n.v1
+    # n_estimated.v1 = n_actual.v1 = sampling_rate1 * (n.v1 + n.v12) - n_estimated.v12
+    #                = sampling_rate1 * (n1_corrected + n_actual.v12 / (sampling_rate1 * sampling_rate2)) - n_actual.v12
+    #                = sampling_rate1 * n1_corrected + n_actual.v12 / sampling_rate2 - n_actual.v12
+    #                = sampling_rate1 * n1_corrected + n_actual.v12 / odds2
+    # よって
+    # n1_corrected = (n_actual.v1 - n_actual.v12 / odds2) / sampling_rate1
+    n1_corrected = (n_actual.v1 - n_actual.v12 / odds2) / sampling_rate1
+    n2_corrected = (n_actual.v2 - n_actual.v12 / odds1) / sampling_rate2
 
     return Cardinality2(n1_corrected, n12_corrected, n2_corrected)
 
