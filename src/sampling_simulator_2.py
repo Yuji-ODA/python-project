@@ -2,9 +2,7 @@ import math
 from random import sample
 from typing import Any, Union, Set
 
-from numpy.linalg import norm
-
-from src.sampling_simulator_util import array, decompose2, Cardinality2
+from src.sampling_simulator_util import array, decompose2, Cardinality2, rmse
 
 
 def simulate(population1: Set[Any], population2: Set[Any],
@@ -26,10 +24,10 @@ def simulate(population1: Set[Any], population2: Set[Any],
 
     # 誤差計算
     probabilities_expected = n.normalized()
-    err_actual = norm(n_actual.normalized() - probabilities_expected)
+    err_actual = rmse(n_actual.normalized(), probabilities_expected)
 
-    err_computed = norm(n_estimated.normalized() - probabilities_expected)
-    err_corrected = norm(n_corrected.normalized() - probabilities_expected)
+    err_computed = rmse(n_estimated.normalized(), probabilities_expected)
+    err_corrected = rmse(n_corrected.normalized(), probabilities_expected)
 
     print_result('expected ', n)
     print_result('actual   ', n_actual, err_actual)

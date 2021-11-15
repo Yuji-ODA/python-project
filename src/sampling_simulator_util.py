@@ -69,3 +69,7 @@ def decompose3(population1, population2, population3) -> Cardinality3:
     n3 = len(population3) - n13 - n23 - n123
 
     return Cardinality3(n1, n2, n3, n12, n13, n23, n123)
+
+
+def rmse(seq1: np.ndarray, seq2: np.ndarray) -> float:
+    return np.linalg.norm(seq1 - seq2) / np.sqrt(len(seq1))
