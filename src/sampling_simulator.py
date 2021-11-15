@@ -147,7 +147,8 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     #         sampling_rate3 * (1 / sampling_rate3 - 1) + sampling_rat2 * (1 / sampling_rate2 - 1) - 1)
     #       = 1 / (sampling_rate1 * sampling_rate2 * sampling_rate3) *
     #         (sampling_rate2 * sampling_rate3 - sampling_rate3 - sampling_rat2 + 1)
-    #       = 1 / sampling_rate1 / (odds2 * odd23)
+    #       = 1 / sampling_rate1 * (1 / sampling_rate2 - 1) * (1 / sampling_rate2 - 1)
+    #       = 1 / sampling_rate1 / (odds2 * odds3)
     r1 = 1 / sampling_rate1
     r2 = 1 / sampling_rate2
     r3 = 1 / sampling_rate3
