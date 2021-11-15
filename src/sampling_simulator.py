@@ -60,13 +60,22 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, sampling_rate3: 
     n123_estimated = sampling_rate1 * sampling_rate2 * sampling_rate3 * n.v123
 
     # サンプリングの総数から重複分を引く
-    n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n123_estimated
-    n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + n.v123) - n123_estimated
-    n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + n.v123) - n123_estimated
+    # n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n123_estimated
+    n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + (1 - sampling_rate3) * n.v123)
+    # n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + n.v123) - n123_estimated
+    n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + (1 - sampling_rate2) * n.v123)
+    # n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + n.v123) - n123_estimated
+    n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + (1 - sampling_rate1) * n.v123)
 
-    n1_estimated = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n12_estimated - n13_estimated - n123_estimated
-    n2_estimated = sampling_rate2 * (n.v2 + n.v12 + n.v23 + n.v123) - n12_estimated - n23_estimated - n123_estimated
-    n3_estimated = sampling_rate3 * (n.v3 + n.v13 + n.v23 + n.v123) - n13_estimated - n23_estimated - n123_estimated
+    # n1_estimated = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n12_estimated - n13_estimated - n123_estimated
+    n1_estimated = sampling_rate1 * (n.v1 + (1 - sampling_rate2) * n.v12 + (1 - sampling_rate3) * n.v13) - \
+                   sampling_rate1 * (sampling_rate2 + sampling_rate3 - sampling_rate2 * sampling_rate3) * n.v123
+    # n2_estimated = sampling_rate2 * (n.v2 + n.v12 + n.v23 + n.v123) - n12_estimated - n23_estimated - n123_estimated
+    n2_estimated = sampling_rate2 * (n.v2 + (1 - sampling_rate1) * n.v12 + (1 - sampling_rate3) * n.v23) - \
+                   sampling_rate2 * (sampling_rate1 + sampling_rate3 - sampling_rate1 * sampling_rate3) * n.v123
+    # n3_estimated = sampling_rate3 * (n.v3 + n.v13 + n.v23 + n.v123) - n13_estimated - n23_estimated - n123_estimated
+    n3_estimated = sampling_rate3 * (n.v3 + (1 - sampling_rate1) * n.v13 + (1 - sampling_rate2) * n.v23) - \
+                   sampling_rate3 * (sampling_rate1 + sampling_rate2 - sampling_rate1 * sampling_rate2) * n.v123
 
     return Cardinality3(n1_estimated, n2_estimated, n3_estimated,
                         n12_estimated, n13_estimated, n23_estimated, n123_estimated)
