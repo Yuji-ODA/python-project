@@ -67,9 +67,6 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, n: Cardinality2)
 # 補正計算
 def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2: float) -> Cardinality2:
 
-    odds1 = sampling_rate1 / (1 - sampling_rate1)
-    odds2 = sampling_rate2 / (1 - sampling_rate2)
-
     r1 = 1 / sampling_rate1
     r2 = 1 / sampling_rate2
 
@@ -84,10 +81,7 @@ def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2:
     # n_estimated.v1 = n_actual.v1 = sampling_rate1 * (n.v1 + n.v12) - n_estimated.v12
     #                = sampling_rate1 * (n1_corrected + n_actual.v12 / (sampling_rate1 * sampling_rate2)) - n_actual.v12
     #                = sampling_rate1 * n1_corrected + n_actual.v12 / sampling_rate2 - n_actual.v12
-    #                = sampling_rate1 * n1_corrected + n_actual.v12 / odds2
-    # よって
-    # n1_corrected = (n_actual.v1 - n_actual.v12 / odds2) / sampling_rate1
-    n1_corrected = r1 * (n_actual.v1 - n_actual.v12 / odds2)
-    n2_corrected = r2 * (n_actual.v2 - n_actual.v12 / odds1)
+    n1_corrected = r1 * (n_actual.v1 - (r2 - 1) * n_actual.v12)
+    n2_corrected = r2 * (n_actual.v2 - (r1 - 1) * n_actual.v12)
 
     return Cardinality2(n1_corrected, n12_corrected, n2_corrected)
