@@ -70,11 +70,14 @@ def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2:
     odds1 = sampling_rate1 / (1 - sampling_rate1)
     odds2 = sampling_rate2 / (1 - sampling_rate2)
 
+    r1 = 1 / sampling_rate1
+    r2 = 1 / sampling_rate2
+
     # 重複分の取りこぼしを補正
     # n_estimated.v12 = n_actual.v12 = sampling_rate1 * sampling_rate2 * n.v12
     # n12_corrected = n.v12
     #               = n_actual.v12 / (sampling_rate1 * sampling_rate2)
-    n12_corrected = n_actual.v12 / (sampling_rate1 * sampling_rate2)
+    n12_corrected = r1 * r2 * n_actual.v12
 
     # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
     # n1_corrected = n.v1
@@ -84,7 +87,7 @@ def do_correction(n_actual: Cardinality2, sampling_rate1: float, sampling_rate2:
     #                = sampling_rate1 * n1_corrected + n_actual.v12 / odds2
     # よって
     # n1_corrected = (n_actual.v1 - n_actual.v12 / odds2) / sampling_rate1
-    n1_corrected = (n_actual.v1 - n_actual.v12 / odds2) / sampling_rate1
-    n2_corrected = (n_actual.v2 - n_actual.v12 / odds1) / sampling_rate2
+    n1_corrected = r1 * (n_actual.v1 - n_actual.v12 / odds2)
+    n2_corrected = r2 * (n_actual.v2 - n_actual.v12 / odds1)
 
     return Cardinality2(n1_corrected, n12_corrected, n2_corrected)
