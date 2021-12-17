@@ -62,23 +62,13 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, sampling_rate3: 
     # これに母集合の重複数をかけて重複数の期待値を得る
     n123_estimated = sampling_rate1 * sampling_rate2 * sampling_rate3 * n.v123
 
-    # サンプリングの総数から重複分を引く
-    # n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n123_estimated
-    n12_estimated = sampling_rate1 * sampling_rate2 * (n.v12 + (1 - sampling_rate3) * n.v123)
-    # n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + n.v123) - n123_estimated
-    n13_estimated = sampling_rate1 * sampling_rate3 * (n.v13 + (1 - sampling_rate2) * n.v123)
-    # n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + n.v123) - n123_estimated
-    n23_estimated = sampling_rate2 * sampling_rate3 * (n.v23 + (1 - sampling_rate1) * n.v123)
+    n12_estimated = sampling_rate1 * sampling_rate2 * n.v12
+    n13_estimated = sampling_rate1 * sampling_rate3 * n.v13
+    n23_estimated = sampling_rate2 * sampling_rate3 * n.v23
 
-    # n1_estimated = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n12_estimated - n13_estimated - n123_estimated
-    n1_estimated = sampling_rate1 * (n.v1 + (1 - sampling_rate2) * n.v12 + (1 - sampling_rate3) * n.v13) - \
-                   sampling_rate1 * (1 - (1 - sampling_rate2) * (1 - sampling_rate3)) * n.v123
-    # n2_estimated = sampling_rate2 * (n.v2 + n.v12 + n.v23 + n.v123) - n12_estimated - n23_estimated - n123_estimated
-    n2_estimated = sampling_rate2 * (n.v2 + (1 - sampling_rate1) * n.v12 + (1 - sampling_rate3) * n.v23) - \
-                   sampling_rate2 * (1 - (1 - sampling_rate1) * (1 - sampling_rate3)) * n.v123
-    # n3_estimated = sampling_rate3 * (n.v3 + n.v13 + n.v23 + n.v123) - n13_estimated - n23_estimated - n123_estimated
-    n3_estimated = sampling_rate3 * (n.v3 + (1 - sampling_rate1) * n.v13 + (1 - sampling_rate2) * n.v23) - \
-                   sampling_rate3 * (1 - (1 - sampling_rate1) * (1 - sampling_rate2)) * n.v123
+    n1_estimated = sampling_rate1 * n.v1
+    n2_estimated = sampling_rate2 * n.v2
+    n3_estimated = sampling_rate3 * n.v3
 
     return Cardinality3(n1_estimated, n2_estimated, n3_estimated,
                         n12_estimated, n13_estimated, n23_estimated, n123_estimated)
@@ -92,57 +82,15 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     r2 = 1 / sampling_rate2
     r3 = 1 / sampling_rate3
 
-    # 補正
-    # 重複分の取りこぼしを補正
-    # n_actual.v123 = n123_computed = sampling_rate1, sampling_rate2 * sampling_rate3 * n.v123
-    # n123_corrected = n123_expected = n.v123
-    #                = n_actual.v123 / (sampling_rate1, sampling_rate2 * sampling_rate3)
     n123_corrected = r1 * r2 * r3 * n_actual.v123
 
-    # 各サンプルサイズをスケーリングしたのちに重複分を増やした分だけ引く
-    # n12_corrected = n.v12
-    # n_actual.v12 = n_estimated.v12 = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n_estimated.v123
-    #              = sampling_rate1 * sampling_rate2 * (n.v12 + n.v123) - n_actual.v123
-    #              = sampling_rate1 * sampling_rate2 * n.v12 + sampling_rate1 * sampling_rate2 * n.v123 - n_actual.v123
-    #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 / sampling_rate3 - n_actual.v123
-    #              = sampling_rate1 * sampling_rate2 * n.v12 + n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
-    #              = sampling_rate1 * sampling_rate2 * n12_corrected +
-    #                n_actual.v123 * (1 - sampling_rate3) / sampling_rate3
-    # よって
-    # n12_corrected = (n_actual.v12 - n_actual.v123 * (1 - sampling_rate3) / sampling_rate3)
-    #                / (sampling_rate1 * sampling_rate2)
-    n12_corrected = r1 * r2 * (n_actual.v12 - (r3 - 1) * n_actual.v123)
-    n13_corrected = r1 * r3 * (n_actual.v13 - (r2 - 1) * n_actual.v123)
-    n23_corrected = r2 * r3 * (n_actual.v23 - (r1 - 1) * n_actual.v123)
+    n12_corrected = r1 * r2 * n_actual.v12
+    n13_corrected = r1 * r3 * n_actual.v13
+    n23_corrected = r2 * r3 * n_actual.v23
 
-    # n1_corrected = n_expected.v1 = n.v1
-    # n.v123 = n123_corrected
-    # n.v12 = n12_corrected
-    # n.v13 = n13_corrected
-    # n_actual.v1 = n_estimated.v1 = sampling_rate1 * n.size1 - n12_estimated - n13_estimated - n123_estimated
-    #             = sampling_rate1 * n.size1 - n_actual.v12 - n_actual.v13 - n_actual.v123
-    #             = sampling_rate1 * (n.v1 + n.v12 + n.v13 + n.v123) - n_actual.v12 - n_actual.v13 - n_actual.v123
-    #             = sampling_rate1 * (n1_corrected + n12_corrected + n13_corrected + n123_corrected) -
-    #               n_actual.v12 - n_actual.v13 - n_actual.v123
-    # よって
-    # n1_corrected = 1 / sampling_rate1 * (n_actual.v1 + n_actual.v12 + n_actual.v13 + n_actual.v123) -
-    #                (n12_corrected + n13_corrected + n123_corrected)
-    # v12について
-    # kv12 = 1 / sampling_rate1 - 1 / (sampling_rate1 * sampling_rate2)) = r1 * (1 - r2)
-    # v13についても同様
-    #
-    # v123について
-    # kv123 = 1 / sampling_rate1 +
-    #         (1 / sampling_rate3 - 1) / (sampling_rate1 * sampling_rate2) +
-    #         (1 / sampling_rate2 - 1) / (sampling_rate1 * sampling_rate3) -
-    #         1 / (sampling_rate1 * sampling_rate2 * sampling_rate3))
-    #       = r1 + (r3 - 1) * (r1 * r2) + (r2 - 1) * (r1 * r3) - r1 * r2 * r3
-    #       = r1 - r1 * r2 - r1 * r3 + r1 * r2 * r3
-    #       = r1 * (1 - r2 - r3 + r2 * r3)
-    #       = r1 * (r2 - 1) * (r3 - 1)
-    n1_corrected = r1 * (n_actual.v1 - ((r2 - 1) * n_actual.v12 + (r3 - 1) * n_actual.v13) + (r2 - 1) * (r3 - 1) * n_actual.v123)
-    n2_corrected = r2 * (n_actual.v2 - ((r1 - 1) * n_actual.v12 + (r3 - 1) * n_actual.v23) + (r1 - 1) * (r3 - 1) * n_actual.v123)
-    n3_corrected = r3 * (n_actual.v3 - ((r1 - 1) * n_actual.v13 + (r2 - 1) * n_actual.v23) + (r1 - 1) * (r2 - 1) * n_actual.v123)
+    n1_corrected = r1 * n_actual.v1
+    n2_corrected = r2 * n_actual.v2
+    n3_corrected = r3 * n_actual.v3
 
     return Cardinality3(n1_corrected, n2_corrected, n3_corrected,
                         n12_corrected, n13_corrected, n23_corrected, n123_corrected)

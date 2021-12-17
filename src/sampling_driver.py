@@ -48,8 +48,6 @@ def generate_testsets(p1, p2, p3, p12, p13, p23, p123, total_size):
 
 
 def run_simulations(set1, set2, set3):
-    n = decompose3(set1, set2, set3)
-
     for sampling_rate1, sampling_rate2, sampling_rate3 \
             in itertools.product(np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2), np.arange(0.1, 1, 0.2)):
         print('========================================================================================================'
