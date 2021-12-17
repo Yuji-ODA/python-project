@@ -18,9 +18,6 @@ class Cardinality2:
     def normalized(self):
         return np.array((self.p1, self.p12, self.p2))
 
-    def scaled(self, multiplier: float):
-        return self.__class__(*[v * multiplier for v in (self.v1, self.v12, self.v2)])
-
 
 class Cardinality3:
     def __init__(self, n1: float, n2: float, n3: float, n12: float, n13: float, n23: float, n123: float):
@@ -36,10 +33,6 @@ class Cardinality3:
 
     def normalized(self):
         return np.array((self.p1, self.p2, self.p3, self.p12, self.p13, self.p23, self.p123))
-
-    def scaled(self, multiplier: float):
-        return self.__class__(*[v * multiplier for v
-                                in (self.v1, self.v2, self.v3, self.v12, self.v13, self.v23, self.v123)])
 
 
 def decompose2(population1, population2) -> Cardinality2:

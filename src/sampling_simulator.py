@@ -60,15 +60,15 @@ def do_estimation(sampling_rate1: float, sampling_rate2: float, sampling_rate3: 
     # 個別サンプリングの場合の理論値の計算
     # 各サンプリングで選ばれる確率はsampling_rateに等しいので重複する確率はsampling_rateの積となる
     # これに母集合の重複数をかけて重複数の期待値を得る
-    n123_estimated = sampling_rate1 * sampling_rate2 * sampling_rate3 * n.v123
+    n123_estimated = sampling_rate1 * sampling_rate2 * sampling_rate3 * n.size123
 
-    n12_estimated = sampling_rate1 * sampling_rate2 * n.v12
-    n13_estimated = sampling_rate1 * sampling_rate3 * n.v13
-    n23_estimated = sampling_rate2 * sampling_rate3 * n.v23
+    n12_estimated = sampling_rate1 * sampling_rate2 * n.size12
+    n13_estimated = sampling_rate1 * sampling_rate3 * n.size13
+    n23_estimated = sampling_rate2 * sampling_rate3 * n.size23
 
-    n1_estimated = sampling_rate1 * n.v1
-    n2_estimated = sampling_rate2 * n.v2
-    n3_estimated = sampling_rate3 * n.v3
+    n1_estimated = sampling_rate1 * n.size1
+    n2_estimated = sampling_rate2 * n.size2
+    n3_estimated = sampling_rate3 * n.size3
 
     return Cardinality3(n1_estimated, n2_estimated, n3_estimated,
                         n12_estimated, n13_estimated, n23_estimated, n123_estimated)
@@ -82,15 +82,15 @@ def do_correction(n_actual: Cardinality3, sampling_rate1: float, sampling_rate2:
     r2 = 1 / sampling_rate2
     r3 = 1 / sampling_rate3
 
-    n123_corrected = r1 * r2 * r3 * n_actual.v123
+    n123_corrected = r1 * r2 * r3 * n_actual.size123
 
-    n12_corrected = r1 * r2 * n_actual.v12
-    n13_corrected = r1 * r3 * n_actual.v13
-    n23_corrected = r2 * r3 * n_actual.v23
+    n12_corrected = r1 * r2 * n_actual.size12
+    n13_corrected = r1 * r3 * n_actual.size13
+    n23_corrected = r2 * r3 * n_actual.size23
 
-    n1_corrected = r1 * n_actual.v1
-    n2_corrected = r2 * n_actual.v2
-    n3_corrected = r3 * n_actual.v3
+    n1_corrected = r1 * n_actual.size1
+    n2_corrected = r2 * n_actual.size2
+    n3_corrected = r3 * n_actual.size3
 
     return Cardinality3(n1_corrected, n2_corrected, n3_corrected,
                         n12_corrected, n13_corrected, n23_corrected, n123_corrected)
