@@ -15,11 +15,11 @@ import numpy as np
 def main():
     p1, p2, p3, p12, p13, p23, p123 = 0.25, 0.35, 0.25, 0.06, 0.03, 0.04, 0.02
     sampling_rate = 0.1
-    unique_users = 3000000
+    unique_users = 30000000
     base_dir = 'output'
 
     splits = 16
-    max_workers = 8
+    max_workers = 16
     probs = (p1, p2, p3, p12, p13, p23, p123)
     generate_userlists(probs, sampling_rate, unique_users, splits, base_dir, max_workers)
 
@@ -63,15 +63,10 @@ def save_guid_sets(probs, unique_users, task_id, base_dir):
 
 def merge_work_files(k, splits, base_dir):
     work_dir = f'{base_dir}/work'
+    input_files = [f'{work_dir}/t{task_id}/list{k}.tsv'for task_id in range(splits)]
     dest_file = f'{base_dir}/list{k}.tsv'
 
-    sources = [open(f'{work_dir}/t{task_id}/list{k}.tsv') for task_id in range(1, splits)]
-
-    with open(dest_file, 'w') as dest:
-        merge_file(sources, dest, lambda line: float(line.split('\t')[1]), reverse=True)
-
-    for src in sources:
-        src.close()
+    merge_file(input_files, dest_file, lambda line: float(line.split('\t')[1]), reverse=True)
 
 
 def sample_file(src_file, dest_file, sampling_rate):
@@ -81,7 +76,8 @@ def sample_file(src_file, dest_file, sampling_rate):
                 sample.write(line)
 
 
-def merge_file(sources, dest, key, reverse=False):
+def merge_file(input_files, dest_file, key, reverse=False):
+    sources = [open(file) for file in input_files]
 
     def read_next(src):
         try:
@@ -90,13 +86,17 @@ def merge_file(sources, dest, key, reverse=False):
         except StopIteration:
             return None
 
-    selection_func = min_with_index if reverse else max_with_index
+    selection_func = max_with_index if reverse else min_with_index
     buf = [read_next(src) for src in sources]
 
-    while any(buf):
-        index, value = selection_func(buf, itemgetter(1))
-        print(value[0], file=dest)
-        buf[index] = read_next(sources[index])
+    with open(dest_file, 'w') as out:
+        while any(buf):
+            index, value = selection_func(buf, itemgetter(1))
+            print(value[0], file=out)
+            buf[index] = read_next(sources[index])
+
+    for source in sources:
+        source.close()
 
 
 def guid_seq(times=None):
