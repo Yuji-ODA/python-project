@@ -14,7 +14,7 @@ import numpy as np
 def main():
     p1, p2, p3, p12, p13, p23, p123 = 0.25, 0.35, 0.25, 0.06, 0.03, 0.04, 0.02
     sampling_rate = 0.1
-    unique_users = 30000000
+    unique_users = 300000
     base_dir = 'output'
 
     splits = 16
@@ -38,9 +38,11 @@ def generate_userlists(probs, sampling_rate, unique_users, splits, base_dir, max
         for i in range(1, 4):
             executor.submit(sample_file, f'{base_dir}/list{i}.tsv', f'{base_dir}/sample{i}.tsv', sampling_rate)
 
+    shutil.rmtree(f'{base_dir}/work')
+
 
 def save_guid_sets(probs, unique_users, task_id, base_dir):
-    work_dir = f'{base_dir}/t{task_id}'
+    work_dir = f'{base_dir}/work/t{task_id}'
     makedirs(work_dir, exist_ok=True)
 
     destinations = tuple(islice(powerset(range(3)), 1, None))
@@ -59,15 +61,16 @@ def save_guid_sets(probs, unique_users, task_id, base_dir):
 
 
 def merge_work_files(k, splits, base_dir):
-    work_file = f'{base_dir}/tmp-list{k}'
+    work_dir = f'{base_dir}/work'
+    work_file = f'{work_dir}/tmp-list{k}'
     dest_file = f'{base_dir}/list{k}.tsv'
 
-    if os.path.exists(f'{base_dir}/t0/list{k}.tsv'):
-        shutil.move(f'{base_dir}/t0/list{k}.tsv', dest_file)
+    if os.path.exists(f'{work_dir}/t0/list{k}.tsv'):
+        shutil.move(f'{work_dir}/t0/list{k}.tsv', dest_file)
 
     for task_id in range(1, splits):
-        work_dir = f'{base_dir}/t{task_id}'
-        with open(dest_file) as src1, open(f'{work_dir}/list{k}.tsv') as src2, open(work_file, 'w') as work:
+        task_dir = f'{work_dir}/t{task_id}'
+        with open(dest_file) as src1, open(f'{task_dir}/list{k}.tsv') as src2, open(work_file, 'w') as work:
             merge_file(src1, src2, work, lambda line: float(line.split('\t')[1]), reverse=True)
 
         shutil.move(work_file, dest_file)
