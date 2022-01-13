@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import os.path
 import shutil
 import string
 from concurrent.futures import ProcessPoolExecutor
+from functools import reduce
 from itertools import combinations, chain, islice, count
-from operator import itemgetter
+from operator import itemgetter, lt, gt
 from os import makedirs
 from random import choices, random
 
@@ -15,7 +15,7 @@ import numpy as np
 def main():
     p1, p2, p3, p12, p13, p23, p123 = 0.25, 0.35, 0.25, 0.06, 0.03, 0.04, 0.02
     sampling_rate = 0.1
-    unique_users = 300000
+    unique_users = 3000000
     base_dir = 'output'
 
     splits = 16
@@ -63,18 +63,15 @@ def save_guid_sets(probs, unique_users, task_id, base_dir):
 
 def merge_work_files(k, splits, base_dir):
     work_dir = f'{base_dir}/work'
-    work_file = f'{work_dir}/tmp-list{k}'
     dest_file = f'{base_dir}/list{k}.tsv'
 
-    if os.path.exists(f'{work_dir}/t0/list{k}.tsv'):
-        shutil.move(f'{work_dir}/t0/list{k}.tsv', dest_file)
+    sources = [open(f'{work_dir}/t{task_id}/list{k}.tsv') for task_id in range(1, splits)]
 
-    for task_id in range(1, splits):
-        task_dir = f'{work_dir}/t{task_id}'
-        with open(dest_file) as src1, open(f'{task_dir}/list{k}.tsv') as src2, open(work_file, 'w') as work:
-            merge_file(src1, src2, work, lambda line: float(line.split('\t')[1]), reverse=True)
+    with open(dest_file, 'w') as dest:
+        merge_file(sources, dest, lambda line: float(line.split('\t')[1]), reverse=True)
 
-        shutil.move(work_file, dest_file)
+    for src in sources:
+        src.close()
 
 
 def sample_file(src_file, dest_file, sampling_rate):
@@ -84,25 +81,22 @@ def sample_file(src_file, dest_file, sampling_rate):
                 sample.write(line)
 
 
-def merge_file(src1, src2, dest, key, reverse=False):
+def merge_file(sources, dest, key, reverse=False):
 
     def read_next(src):
         try:
-            return next(src)
+            line = next(src).rstrip('\r\n')
+            return line, key(line)
         except StopIteration:
             return None
 
-    line1, line2 = read_next(src1), read_next(src2)
+    selection_func = min_with_index if reverse else max_with_index
+    buf = [read_next(src) for src in sources]
 
-    while any((line1, line2)):
-        if line2 is None or (key(line1.rstrip('\r\n')) <= key(line2.rstrip('\r\n'))) ^ reverse:
-            dest.write(line1)
-            if line1 is not None:
-                line1 = read_next(src1)
-        else:
-            dest.write(line2)
-            if line2 is not None:
-                line2 = read_next(src2)
+    while any(buf):
+        index, value = selection_func(buf, itemgetter(1))
+        print(value[0], file=dest)
+        buf[index] = read_next(sources[index])
 
 
 def guid_seq(times=None):
@@ -115,6 +109,29 @@ def generate_guid():
 
 def powerset(elements):
     return chain.from_iterable(combinations(elements, r) for r in range(len(elements)+1))
+
+
+def build_reducer(comparator, key):
+    def reducer(acc, elem):
+        if acc[0] is None:
+            return elem, None if elem[1] is None else key(elem[1])
+
+        if elem[1] is not None:
+            value = key(elem[1])
+            if acc[1] is None or comparator(value, acc[1]):
+                return elem, value
+
+        return acc
+
+    return reducer
+
+
+def max_with_index(seq, key=lambda x: x):
+    return reduce(build_reducer(gt, key), enumerate(seq), (None,))[0]
+
+
+def min_with_index(seq, key=lambda x: x):
+    return reduce(build_reducer(lt, key), enumerate(seq), (None,))[0]
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ from random import choices
 import numpy as np
 
 from src.sampling_simulator import simulate
-from src.sampling_simulator_util import array, decompose3
+from src.sampling_simulator_util import array
 
 
 def main():
