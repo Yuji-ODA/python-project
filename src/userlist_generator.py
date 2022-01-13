@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
+
 import os.path
+import shutil
 import string
 from concurrent.futures import ProcessPoolExecutor
 from itertools import combinations, chain, islice, count
 from operator import itemgetter
 from os import makedirs
 from random import choices, random
-import shutil
 
 import numpy as np
 
