@@ -10,7 +10,7 @@ from functools import reduce
 from itertools import combinations, chain, islice, count
 from operator import itemgetter, lt, gt
 from os import makedirs
-from random import choices, random
+from random import choices, sample
 
 import numpy as np
 
@@ -47,11 +47,11 @@ def main():
     print(f'users={args.users}, sampling rate={args.sampling_rate}, output dir={args.output_dir}')
     print(f'splits={args.splits}, max workers={args.max_workers}')
 
-    generate_userlists((p1, p2, p3, p12, p13, p23, p123), args.sampling_rate, args.users, args.output_dir, args.splits,
-                       args.max_workers)
+    probs = (p1, p2, p3, p12, p13, p23, p123)
+    generate_userlists(probs, args.users, args.sampling_rate, args.output_dir, args.splits, args.max_workers)
 
 
-def generate_userlists(probs, sampling_rate, unique_users, base_dir, splits, max_workers):
+def generate_userlists(probs, unique_users, sampling_rate, base_dir, splits, max_workers):
     makedirs(base_dir, exist_ok=True)
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -60,11 +60,7 @@ def generate_userlists(probs, sampling_rate, unique_users, base_dir, splits, max
 
     with ProcessPoolExecutor(max_workers=3) as executor:
         for i in range(1, 4):
-            executor.submit(merge_work_files, i, splits, base_dir)
-
-    with ProcessPoolExecutor(max_workers=3) as executor:
-        for i in range(1, 4):
-            executor.submit(sample_file, f'{base_dir}/list{i}.tsv', f'{base_dir}/sample{i}.tsv', sampling_rate)
+            executor.submit(merge_and_sample, i, sampling_rate, base_dir, splits)
 
     shutil.rmtree(f'{base_dir}/work')
 
@@ -82,28 +78,35 @@ def save_guid_sets(probs, unique_users, task_id, base_dir):
 
     userlists = [sorted(userlist.items(), key=itemgetter(1), reverse=True) for userlist in buf]
 
-    for i, userlist in enumerate(userlists):
-        with open(f'{work_dir}/list{i+1}.tsv', 'w') as dest:
+    for i, userlist in enumerate(userlists, start=1):
+        with open(f'{work_dir}/list{i}.tsv', 'w') as dest:
             for guid, score in userlist:
                 print('\t'.join((guid, str(score))), file=dest)
 
 
-def merge_work_files(k, splits, base_dir):
+def merge_and_sample(k, sampling_rate, base_dir, splits):
+    line_count = merge_work_files(k, splits, base_dir)
+    sample_from_file(f'{base_dir}/list{k}.tsv', f'{base_dir}/sample{k}.tsv', sampling_rate, line_count)
+
+
+def merge_work_files(k, splits, base_dir) -> int:
     work_dir = f'{base_dir}/work'
     input_files = [f'{work_dir}/t{task_id}/list{k}.tsv'for task_id in range(splits)]
     dest_file = f'{base_dir}/list{k}.tsv'
 
-    merge_file(input_files, dest_file, lambda line: float(line.split('\t')[1]), reverse=True)
+    return merge_file(input_files, dest_file, lambda line: float(line.split('\t')[1]), reverse=True)
 
 
-def sample_file(src_file, dest_file, sampling_rate):
-    with open(src_file) as src, open(dest_file, 'w') as sample:
-        for line in src:
-            if random() < sampling_rate:
-                sample.write(line)
+def sample_from_file(src_file, dest_file, sampling_rate, total_count):
+    sample_count = round(sampling_rate * total_count)
+    sample_indices = set(sample(range(sample_count), sample_count))
+    with open(src_file) as src, open(dest_file, 'w') as dest:
+        for i, line in enumerate(src):
+            if i in sample_indices:
+                dest.write(line)
 
 
-def merge_file(input_files, dest_file, key, reverse=False):
+def merge_file(input_files, dest_file, key, reverse=False) -> int:
     sources = [open(file) for file in input_files]
 
     def read_next(src):
@@ -116,26 +119,26 @@ def merge_file(input_files, dest_file, key, reverse=False):
     selection_func = max_with_index if reverse else min_with_index
     buf = [read_next(src) for src in sources]
 
+    total_count = 0
     with open(dest_file, 'w') as out:
         while any(buf):
             index, value = selection_func(buf, itemgetter(1))
             print(value[0], file=out)
+            total_count += 1
             buf[index] = read_next(sources[index])
 
     for source in sources:
         source.close()
 
-
-def guid_seq(times=None):
-    return (generate_guid() for _ in islice(count(), times))
+    return total_count
 
 
-def generate_guid():
-    return ''.join(choices(string.ascii_uppercase + string.digits, k=26))
+def max_with_index(seq, key=lambda x: x):
+    return reduce(build_reducer(gt, key), enumerate(seq), (None,))[0]
 
 
-def powerset(elements):
-    return chain.from_iterable(combinations(elements, r) for r in range(len(elements)+1))
+def min_with_index(seq, key=lambda x: x):
+    return reduce(build_reducer(lt, key), enumerate(seq), (None,))[0]
 
 
 def build_reducer(comparator, key):
@@ -153,12 +156,16 @@ def build_reducer(comparator, key):
     return reducer
 
 
-def max_with_index(seq, key=lambda x: x):
-    return reduce(build_reducer(gt, key), enumerate(seq), (None,))[0]
+def guid_seq(times=None):
+    return (generate_guid() for _ in islice(count(), times))
 
 
-def min_with_index(seq, key=lambda x: x):
-    return reduce(build_reducer(lt, key), enumerate(seq), (None,))[0]
+def generate_guid():
+    return ''.join(choices(string.ascii_uppercase + string.digits, k=26))
+
+
+def powerset(elements):
+    return chain.from_iterable(combinations(elements, r) for r in range(len(elements)+1))
 
 
 if __name__ == '__main__':
