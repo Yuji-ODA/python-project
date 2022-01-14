@@ -43,11 +43,15 @@ def main():
         orig = np.array((args.p1, args.p2, args.p3, args.p12, args.p13, args.p23, args.p123))
         p1, p2, p3, p12, p13, p23, p123 = orig / orig.sum()
 
-    probs = (p1, p2, p3, p12, p13, p23, p123)
-    generate_userlists(probs, args.sampling_rate, args.users, args.splits, args.output_dir, args.max_workers)
+    print(f'p1={p1}, p2={p2}, p3={p3}, p12={p12}, p13={p13}, p23={p23}, p123={p123}')
+    print(f'users={args.users}, sampling rate={args.sampling_rate}, output dir={args.output_dir}')
+    print(f'splits={args.splits}, max workers={args.max_workers}')
+
+    generate_userlists((p1, p2, p3, p12, p13, p23, p123), args.sampling_rate, args.users, args.output_dir, args.splits,
+                       args.max_workers)
 
 
-def generate_userlists(probs, sampling_rate, unique_users, splits, base_dir, max_workers):
+def generate_userlists(probs, sampling_rate, unique_users, base_dir, splits, max_workers):
     makedirs(base_dir, exist_ok=True)
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
