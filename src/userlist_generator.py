@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import argparse
+import multiprocessing
 import shutil
 import string
+import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import reduce
 from itertools import combinations, chain, islice, count
@@ -13,15 +16,35 @@ import numpy as np
 
 
 def main():
-    p1, p2, p3, p12, p13, p23, p123 = 0.25, 0.35, 0.25, 0.06, 0.03, 0.04, 0.02
-    sampling_rate = 0.1
-    unique_users = 30000000
-    base_dir = 'output'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('p1', type=float)
+    parser.add_argument('p2', type=float)
+    parser.add_argument('p3', type=float)
+    parser.add_argument('p12', type=float)
+    parser.add_argument('p13', type=float)
+    parser.add_argument('p23', type=float)
+    parser.add_argument('p123', type=float, nargs='?')
+    parser.add_argument('-u', '--users', type=int, default=3000000, help='size of unique users (default: 3000000)')
+    parser.add_argument('-r', '--sampling-rate', type=float, default=0.1, help='sampling rate (default: 0.1)')
+    parser.add_argument('-d', '--output-dir', type=str, default='output',
+                        help='dir for output results (default: ./output)')
+    parser.add_argument('-s', '--splits', type=int, default=multiprocessing.cpu_count(), help='(default: cpu count)')
+    parser.add_argument('-n', '--max-workers', type=int, default=multiprocessing.cpu_count(),
+                        help='(default: cpu count)')
+    args = parser.parse_args()
 
-    splits = 16
-    max_workers = 16
+    if args.p123 is None:
+        p1, p2, p3, p12, p13, p23 = args.p1, args.p2, args.p3, args.p12, args.p13, args.p23
+        p123 = round(1 - sum((p1, p2, p3, p12, p13, p23)), 9)
+        if p12 < 0:
+            print('the sum of params exceeds 1', file=sys.stderr)
+            exit(-1)
+    else:
+        orig = np.array((args.p1, args.p2, args.p3, args.p12, args.p13, args.p23, args.p123))
+        p1, p2, p3, p12, p13, p23, p123 = orig / orig.sum()
+
     probs = (p1, p2, p3, p12, p13, p23, p123)
-    generate_userlists(probs, sampling_rate, unique_users, splits, base_dir, max_workers)
+    generate_userlists(probs, args.sampling_rate, args.users, args.splits, args.output_dir, args.max_workers)
 
 
 def generate_userlists(probs, sampling_rate, unique_users, splits, base_dir, max_workers):
