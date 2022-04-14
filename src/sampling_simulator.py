@@ -48,9 +48,9 @@ def print_result(header: str, n: Cardinality3, err: float = math.nan):
 # 個別サンプリング
 def do_sampling(population1: Set[Any], population2: Set[Any], population3: Set[Any],
                 sampling_rate1: float, sampling_rate2: float, sampling_rate3: float) -> Cardinality3:
-    sample1 = set(sample(list(population1), int(len(population1) * sampling_rate1)))
-    sample2 = set(sample(list(population2), int(len(population2) * sampling_rate2)))
-    sample3 = set(sample(list(population3), int(len(population3) * sampling_rate3)))
+    sample1 = set(sample(list(population1), round(len(population1) * sampling_rate1)))
+    sample2 = set(sample(list(population2), round(len(population2) * sampling_rate2)))
+    sample3 = set(sample(list(population3), round(len(population3) * sampling_rate3)))
 
     return decompose3(sample1, sample2, sample3)
 
