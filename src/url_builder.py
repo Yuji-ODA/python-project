@@ -1,11 +1,10 @@
 import itertools
-from collections import defaultdict
 from functools import reduce
-from typing import List, TypeVar, Callable, Generator, Mapping
-from urllib.parse import urlparse, ParseResult, urlunparse, urlencode
+from typing import List, TypeVar, Callable, Iterator, MutableMapping
+from urllib.parse import urlparse, ParseResult, urlunparse, urlencode, parse_qs
 
 T = TypeVar('T')
-QueryMapping = Mapping[str, List[str]]
+QueryMapping = MutableMapping[str, List[str]]
 
 
 class UrlBuilder:
@@ -25,32 +24,26 @@ class UrlBuilder:
         return self.from_parse_result(self._parse_result._replace(path=new_path))
 
     def query_param(self, name: str, *values: str) -> 'UrlBuilder':
-        query_mapping = parse_query(self._parse_result.query)
-        query_mapping[name].extend(values)
-        new_query = '&'.join(itertools.chain.from_iterable(expand_mapping(lambda n, v: f'{n}={v}', query_mapping)))
+        query_mapping = parse_qs(self._parse_result.query)
+        add_values(query_mapping, name, *values)
+        new_query = '&'.join(expand_mapping(lambda n, v: f'{n}={v}', query_mapping))
         return self.from_parse_result(self._parse_result._replace(query=new_query))
 
     def build(self) -> str:
-        query_mapping = parse_query(self._parse_result.query)
-        queries = expand_mapping(lambda n, v: (n, v), query_mapping)
-        encoded_query = urlencode(list(itertools.chain.from_iterable(queries)))
+        query_mapping = parse_qs(self._parse_result.query)
+        encoded_query = urlencode(list(expand_mapping(lambda n, v: (n, v), query_mapping)))
         return urlunparse(self._parse_result._replace(query=encoded_query))
 
 
-def parse_query(qs: str) -> QueryMapping:
-    store = defaultdict(list)
-    for query in qs.split('&'):
-        if len(query) == 0:
-            continue
-        k, v = query.split('=')
-        store[k].append(v)
-    return store
+def expand_mapping(f: Callable[[str, str], T], mapping: QueryMapping) -> Iterator[T]:
+
+    return itertools.chain.from_iterable((f(name, value) for value in values) for name, values in mapping.items())
 
 
-def expand_mapping(f: Callable[[str, str], T], mapping: QueryMapping) \
-        -> Generator[Generator[T, None, None], None, None]:
-
-    return ((f(name, value) for value in values) for name, values in mapping.items())
+def add_values(mapping: QueryMapping, name: str, *values: str):
+    if name not in mapping:
+        mapping[name] = []
+    mapping[name].extend(values)
 
 
 if __name__ == '__main__':
@@ -62,3 +55,4 @@ if __name__ == '__main__':
         .build()
 
     print(url)
+
