@@ -36,7 +36,6 @@ class UrlBuilder:
 
 
 def expand_mapping(f: Callable[[str, str], T], mapping: QueryMapping) -> Iterator[T]:
-
     return itertools.chain.from_iterable((f(name, value) for value in values) for name, values in mapping.items())
 
 
