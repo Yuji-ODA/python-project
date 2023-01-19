@@ -3,8 +3,9 @@ import json
 from string import Template
 from typing import Dict, Union, List, Mapping, Callable
 
-JsonType = Union[str, int, float, List['JsonType'], Dict[str, 'JsonType']]
-JsonMapping = Mapping[str, JsonType]
+JsonValue = Union[str, int, float, List['JsonValue'], Dict[str, 'JsonValue']]
+JsonType = Union[List[JsonValue], Dict[str, JsonValue]]
+JsonMapping = Mapping[str, JsonValue]
 
 
 def load_template(template_file: str) -> Callable[[JsonMapping], JsonType]:
