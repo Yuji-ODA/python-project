@@ -10,7 +10,8 @@ JsonMapping = Mapping[str, JsonType]
 def load_template(template_file: str) -> Callable[[JsonMapping], JsonType]:
     with open(template_file) as f:
         t = Template(f.read())
-    return lambda mapping: json.loads(t.safe_substitute({k: json.dumps(v) for k, v in mapping.items()}))
+    return lambda mapping: json.loads(
+        t.safe_substitute({k: json.dumps(v) for k, v in mapping.items()}))
 
 
 def load_json(template_file: str, mapping: JsonMapping) -> JsonType:
