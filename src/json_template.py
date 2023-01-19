@@ -8,8 +8,8 @@ JsonType = Union[List[JsonValue], Dict[str, JsonValue]]
 JsonMapping = Mapping[str, JsonValue]
 
 
-def load_template(template_file: str) -> Callable[[JsonMapping], JsonType]:
-    with open(template_file) as f:
+def load_template(template_file: str, encoding: str = 'utf-8') -> Callable[[JsonMapping], JsonType]:
+    with open(template_file, encoding=encoding) as f:
         t = Template(f.read())
     return lambda mapping: json.loads(
         t.safe_substitute({k: json.dumps(v) for k, v in mapping.items()}))
