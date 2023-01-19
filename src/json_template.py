@@ -7,7 +7,7 @@ JsonType = Union[List[JsonValue], Dict[str, JsonValue]]
 JsonMapping = Mapping[str, JsonValue]
 
 
-class JsonMappingClass(Mapping[str, JsonValue]):
+class JsonMappingClass(JsonMapping):
 
     def __getitem__(self, key: str) -> JsonValue:
         return self.__dict__.__getitem__(key)
@@ -24,8 +24,13 @@ class JsonMappingClass(Mapping[str, JsonValue]):
     def apply_template(self, template_file: str, encoding='utf-8') -> JsonType:
         return load_template(template_file, encoding=encoding)(self)
 
+    def replace(self, **kwargs):
+        updated = {k: kwargs.get(k, v) for k, v in self.items()}
+        return self.__class__(**updated)
 
-def load_template(template_file: str, encoding: str = 'utf-8') -> Callable[[JsonMapping | JsonMappingClass], JsonType]:
+
+def load_template(template_file: str,
+                  encoding: str = 'utf-8') -> Callable[[JsonMapping], JsonType]:
     with open(template_file, encoding=encoding) as f:
         t = Template(f.read())
 
