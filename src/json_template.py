@@ -20,7 +20,7 @@ def load_json(template_file: str, mapping: JsonMapping) -> JsonType:
 
 
 if __name__ == '__main__':
-    json_loader = load_template('template/template.json')
+    json_loader = load_template('template/template.json.tpl')
 
     params = {
         'int': 1.2,
