@@ -24,10 +24,6 @@ class JsonMappingClass(JsonMapping):
     def apply_template(self, template_file: str, encoding='utf-8') -> JsonType:
         return load_template(template_file, encoding=encoding)(self)
 
-    def replace(self, **kwargs):
-        updated = {k: kwargs.get(k, v) for k, v in self.items()}
-        return self.__class__(**updated)
-
 
 def load_template(template_file: str,
                   encoding: str = 'utf-8') -> Callable[[JsonMapping], JsonType]:
