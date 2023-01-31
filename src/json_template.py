@@ -30,8 +30,12 @@ def load_template(template_file: str,
     with open(template_file, encoding=encoding) as f:
         t = Template(f.read())
 
+    def embed(value): return value if isinstance(value, str) else json.dumps(value)
+
     return lambda mapping: json.loads(
-        t.safe_substitute({k: json.dumps(v) for k, v in mapping.items()}))
+        t.safe_substitute({k: embed(v) for k, v in mapping.items()}),
+        strict=False
+    )
 
 
 if __name__ == '__main__':
