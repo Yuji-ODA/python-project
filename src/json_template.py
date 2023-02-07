@@ -1,6 +1,6 @@
 import json
 from string import Template
-from typing import Dict, Union, List, Mapping, Callable, Iterator
+from typing import Dict, Union, List, Mapping, Callable, Iterator, ItemsView
 
 JsonValue = Union[str, int, float, List['JsonValue'], Dict[str, 'JsonValue']]
 JsonType = Union[List[JsonValue], Dict[str, JsonValue]]
@@ -18,7 +18,7 @@ class JsonMappingClass(JsonMapping):
     def __iter__(self) -> Iterator[str]:
         return self.__dict__.__iter__()
 
-    def items(self):
+    def items(self) -> ItemsView[str, JsonValue]:
         return self.__dict__.items()
 
     def apply_template(self, template_file: str, encoding='utf-8') -> JsonType:
