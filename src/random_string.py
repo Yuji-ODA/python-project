@@ -8,8 +8,8 @@ from typing import Generator
 
 ALPHAMERICS = [string.digits, string.ascii_uppercase, string.ascii_lowercase]
 
-def generate_passwd(length: int = 20, n: int = 10, additional_letters: list[str] | None = None) -> Generator[str, None, None]:
-    populations = (ALPHAMERICS + additional_letters) if additional_letters else ALPHAMERICS
+def generate_passwd(length: int = 20, n: int = 10, additional_letters: str | None = None) -> Generator[str, None, None]:
+    populations = (ALPHAMERICS + [additional_letters]) if additional_letters else ALPHAMERICS
 
     if length < len(populations):
         raise Exception('Too short password length')
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     size = int(input() or 20)
 
     print('追加の文字は?: ', end='')
-    letters = list(input())
+    letters = input()
 
     try:
         for password in generate_passwd(size, additional_letters=letters):
