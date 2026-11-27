@@ -30,8 +30,12 @@ def identity(x: T) -> T:
     return x
 
 
-def compose(after: Callable[[T2], T3], before: Callable[[T1], T2]) -> Callable[[T1], T3]:
+def compose2(after: Callable[[T2], T3], before: Callable[[T1], T2]) -> Callable[[T1], T3]:
     return lambda x: after(before(x))
+
+
+def compose(*fs: Callable) -> Callable:
+    return reduce(compose2, fs, identity)
 
 
 def mapply(f: Callable[[T], T], n: int) -> Callable[[T], T]:
@@ -47,3 +51,5 @@ if __name__ == '__main__':
     grandpa = mapply(dirname, 2)
 
     print(grandpa(r'\hoge\huga\foo\bar.txt'))
+
+    print(compose(round, float)(1.5))
