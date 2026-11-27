@@ -3,33 +3,30 @@
 import string
 import sys
 from functools import reduce
-from operator import add
 from random import choice, sample, choices
 
 ALPHAMERICS = [string.digits, string.ascii_uppercase, string.ascii_lowercase]
-ALPHAMERIC_AND_SYMBOLS = ALPHAMERICS + ['/*-+.,!#$%&()~|_']
 
-def generate_passwd(length: int = 20, additional_letters: list[str] | None = None):
+def generate_passwd(length: int = 20, n: int = 10, additional_letters: list[str] | None = None) -> list[str]:
     populations = (ALPHAMERICS + additional_letters) if additional_letters else ALPHAMERICS
 
-    letters = [choice(p) for p in populations] + choices(reduce(add, populations), k=length - len(populations))
-
-    print()
-    for _ in range(10):
-        print(''.join(sample(letters, length)))
+    letter_population = [choice(p) for p in populations] + choices(reduce(lambda acc, p: acc + p, populations), k=length - len(populations))
+    return [''.join(sample(letter_population, length)) for _ in range(10)]
 
 
 if __name__ == '__main__':
-    print('length? [20]: ', end='')
+    print('パスワードの長さは? [20]: ', end='')
     l = input()
     size = int(l) if l else 20
     if size < 4:
         sys.exit('Too few arguments')
 
-    print('letters?: ', end='')
+    print('追加の文字は?: ', end='')
     letters = list(input())
 
-    generate_passwd(size, letters)
+    print()
+    for p in generate_passwd(size, additional_letters=letters):
+        print(p)
 
     print('\n続行するには、Enter キーを押してください...:', end='')
     input()
